@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { MountFuji, Pagoda, PetalRain, SakuraTree, Torii, Water } from './objects';
 
@@ -12,32 +12,29 @@ import { MountFuji, Pagoda, PetalRain, SakuraTree, Torii, Water } from './object
  * từng sự kiện chuột, còn lerp cho cảm giác trôi tự nhiên.
  */
 function CameraRig({ animated }: { animated: boolean }) {
-  const { camera } = useThree();
-  const pointer = useRef({ x: 0, y: 0 });
-  const scroll = useRef(0);
+  // Giữ ở ref kiểu số nguyên thuỷ: cập nhật 60 lần/giây mà gắn vào state React
+  // thì component sẽ render lại 60 lần/giây.
+  const scrollRef = useRef(0);
 
-  useFrame(() => {
+  // Lấy camera từ tham số của useFrame chứ không bắt từ phạm vi render —
+  // đối tượng lấy lúc render bị coi là bất biến.
+  useFrame((state) => {
     if (!animated) return;
 
-    // Đọc trực tiếp thay vì gắn state React — tránh render lại 60 lần/giây
-    if (typeof window !== 'undefined') {
-      const max = Math.max(1, document.body.scrollHeight - window.innerHeight);
-      scroll.current = Math.min(1, window.scrollY / max);
-    }
+    const max = Math.max(1, document.body.scrollHeight - window.innerHeight);
+    scrollRef.current = Math.min(1, window.scrollY / max);
+    const scroll = scrollRef.current;
 
-    const targetX = pointer.current.x * 2.2;
-    const targetY = 3 + pointer.current.y * 1.1 + scroll.current * 3.5;
-    const targetZ = 16 - scroll.current * 5;
+    const targetX = state.pointer.x * 2.2;
+    const targetY = 3 + state.pointer.y * 1.1 + scroll * 3.5;
+    const targetZ = 16 - scroll * 5;
 
-    camera.position.x += (targetX - camera.position.x) * 0.045;
-    camera.position.y += (targetY - camera.position.y) * 0.045;
-    camera.position.z += (targetZ - camera.position.z) * 0.045;
-    camera.lookAt(0, 2.2 + scroll.current * 1.4, 0);
-  });
-
-  useFrame(({ pointer: p }) => {
-    pointer.current.x = p.x;
-    pointer.current.y = p.y;
+    // Nội suy mượt thay vì gán thẳng: gán thẳng làm camera giật theo từng
+    // sự kiện chuột, còn nội suy cho cảm giác trôi tự nhiên.
+    state.camera.position.x += (targetX - state.camera.position.x) * 0.045;
+    state.camera.position.y += (targetY - state.camera.position.y) * 0.045;
+    state.camera.position.z += (targetZ - state.camera.position.z) * 0.045;
+    state.camera.lookAt(0, 2.2 + scroll * 1.4, 0);
   });
 
   return null;

@@ -12,6 +12,19 @@ import * as THREE from 'three';
  * tức thì — đúng thứ người dùng máy yếu, mạng chậm cần.
  */
 
+/**
+ * Sinh số giả ngẫu nhiên THUẦN KHIẾT từ một chỉ số.
+ *
+ * Không dùng Math.random() vì hàm này không thuần khiết: mỗi lần render sẽ ra
+ * kết quả khác nhau, khiến React không thể ghi nhớ kết quả và cánh hoa nhảy
+ * loạn mỗi khi component render lại. Băm bằng sin cho kết quả ổn định theo
+ * chỉ số, tức là cùng một hạt giống luôn cho cùng một cảnh.
+ */
+function rand01(n: number): number {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
 const VERMILION = '#D94F3D';
 const VERMILION_DARK = '#A63A2C';
 const INDIGO = '#1B3A6B';
@@ -140,19 +153,23 @@ export function SakuraTree({
   scale?: number;
   seed?: number;
 }) {
-  const blossoms = useMemo(() => {
-    // Ngẫu nhiên có hạt để mỗi cây khác nhau nhưng không đổi giữa các lần render
-    let s = seed * 9301 + 49297;
-    const rand = () => {
-      s = (s * 9301 + 49297) % 233280;
-      return s / 233280;
-    };
-    return Array.from({ length: 7 }, () => ({
-      pos: [(rand() - 0.5) * 1.9, 2.1 + rand() * 1.1, (rand() - 0.5) * 1.9] as [number, number, number],
-      radius: 0.55 + rand() * 0.45,
-      tint: rand() > 0.5 ? '#F7B4C2' : '#FBD9E0',
-    }));
-  }, [seed]);
+  // Mỗi cây một dáng riêng nhưng cố định theo hạt giống
+  const blossoms = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) => {
+        const base = seed * 100 + i * 7;
+        return {
+          pos: [
+            (rand01(base) - 0.5) * 1.9,
+            2.1 + rand01(base + 1) * 1.1,
+            (rand01(base + 2) - 0.5) * 1.9,
+          ] as [number, number, number],
+          radius: 0.55 + rand01(base + 3) * 0.45,
+          tint: rand01(base + 4) > 0.5 ? '#F7B4C2' : '#FBD9E0',
+        };
+      }),
+    [seed],
+  );
 
   return (
     <group position={position} scale={scale}>
@@ -190,17 +207,20 @@ export function PetalRain({
 
   const petals = useMemo(
     () =>
-      Array.from({ length: count }, () => ({
-        x: (Math.random() - 0.5) * bounds.x,
-        y: Math.random() * bounds.y,
-        z: (Math.random() - 0.5) * bounds.z,
-        fallSpeed: 0.35 + Math.random() * 0.55,
-        swayAmp: 0.4 + Math.random() * 1.1,
-        swaySpeed: 0.4 + Math.random() * 0.9,
-        phase: Math.random() * Math.PI * 2,
-        spinSpeed: (Math.random() - 0.5) * 1.6,
-        scale: 0.055 + Math.random() * 0.075,
-      })),
+      Array.from({ length: count }, (_, i) => {
+        const b = i * 11;
+        return {
+          x: (rand01(b) - 0.5) * bounds.x,
+          y: rand01(b + 1) * bounds.y,
+          z: (rand01(b + 2) - 0.5) * bounds.z,
+          fallSpeed: 0.35 + rand01(b + 3) * 0.55,
+          swayAmp: 0.4 + rand01(b + 4) * 1.1,
+          swaySpeed: 0.4 + rand01(b + 5) * 0.9,
+          phase: rand01(b + 6) * Math.PI * 2,
+          spinSpeed: (rand01(b + 7) - 0.5) * 1.6,
+          scale: 0.055 + rand01(b + 8) * 0.075,
+        };
+      }),
     [count, bounds.x, bounds.y, bounds.z],
   );
 
