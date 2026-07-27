@@ -1,0 +1,122 @@
+# Nihongo Kizuna — Frontend
+
+Giao diện nền tảng học tiếng Nhật trực tuyến **phi lợi nhuận**, miễn phí hoàn toàn, hướng tới người học có hoàn cảnh khó khăn.
+
+> Backend: https://github.com/Japanese-Ziec205/BE
+
+---
+
+## Công nghệ
+
+| Thành phần | Lựa chọn |
+|---|---|
+| Framework | Next.js 16 (App Router) + TypeScript |
+| Giao diện | TailwindCSS 3 |
+| Trạng thái | Zustand |
+| Biểu mẫu | React Hook Form + zod |
+| Icon | lucide-react |
+| Triển khai | Vercel |
+
+## Chạy tại máy
+
+```bash
+git clone https://github.com/Japanese-Ziec205/FE.git
+cd FE
+npm install
+
+cp .env.example .env.local     # trỏ NEXT_PUBLIC_API_URL tới backend của bạn
+npm run dev                     # http://localhost:3000
+```
+
+Cần chạy backend song song (mặc định `http://localhost:5000`).
+
+## Các lệnh
+
+| Lệnh | Tác dụng |
+|---|---|
+| `npm run dev` | Chạy chế độ phát triển |
+| `npm run build` | Build bản production |
+| `npm start` | Chạy bản đã build |
+| `npm run lint` | Kiểm tra ESLint |
+| `npm run typecheck` | Kiểm tra kiểu TypeScript |
+
+## Cấu trúc thư mục
+
+```
+src/
+├── app/
+│   ├── page.tsx            trang giới thiệu (public, tĩnh, tốt cho SEO)
+│   ├── layout.tsx          layout gốc, nạp font và AuthProvider
+│   ├── globals.css         design token + lớp tiện ích dùng chung
+│   ├── (auth)/             đăng ký · đăng nhập · xác thực OTP · quên/đặt lại mật khẩu
+│   └── (learn)/            khu vực cần đăng nhập: bảng điều khiển, hồ sơ, học, ôn tập
+├── components/
+│   ├── ui/                 Button · Input · Alert · Card · Mascot · ComingSoon
+│   └── providers/          AuthProvider
+└── lib/
+    ├── api-client.ts       fetch wrapper + tự động refresh token
+    ├── auth-store.ts       trạng thái đăng nhập (Zustand)
+    ├── validators.ts       schema zod, khớp với backend
+    ├── types.ts            kiểu dữ liệu API
+    └── utils.ts            hàm tiện ích
+```
+
+## Ghi chú thiết kế
+
+**Access token không nằm trong `localStorage`.** Nó chỉ được giữ trong bộ nhớ JavaScript. `localStorage` đọc được bằng script, nên một lỗ hổng XSS là đủ để đánh cắp phiên. Đổi lại, tải lại trang sẽ mất token — vì vậy `AuthProvider` gọi `POST /auth/refresh` một lần khi khởi động để lấy lại token từ cookie `httpOnly` mà backend đã đặt.
+
+**Tự động refresh khi token hết hạn.** `api-client.ts` bắt lỗi `401 AUTH_TOKEN_EXPIRED`, gọi refresh rồi thử lại request cũ. Nhiều request cùng hết hạn một lúc sẽ dùng chung **một** lần refresh, không gọi trùng lặp.
+
+**Không có `middleware.ts` chặn route.** FE ở `*.vercel.app` còn BE ở `*.onrender.com` — hai domain khác nhau, nên cookie phiên thuộc về backend và middleware của Next **không đọc được**. Viết `req.cookies.has('rt')` sẽ luôn trả về `false` và đá văng cả người đã đăng nhập. Việc bảo vệ route làm ở phía client trong `(learn)/layout.tsx`; chi tiết xem [`src/app/(learn)/README.md`](src/app/(learn)/README.md).
+
+Dù sao thì bảo vệ ở frontend cũng chỉ là lớp trải nghiệm — **mọi kiểm tra quyền thật đều nằm ở backend**.
+
+**Một ô nhập cho cả email lẫn số điện thoại.** Không bắt người dùng chọn tab "Email / SĐT". Hệ thống tự nhận diện. Ít thao tác hơn, và nhiều người trong nhóm đối tượng của dự án quen dùng số điện thoại hơn email.
+
+**Giao diện ưu tiên điện thoại đời thấp.** Chữ không bao giờ nhỏ hơn 16px, vùng chạm tối thiểu 44×44px, tôn trọng `prefers-reduced-motion`, mọi chức năng dùng được bằng bàn phím, và không dùng màu làm tín hiệu duy nhất (đúng/sai luôn kèm icon và chữ).
+
+**Linh vật vẽ bằng SVG nội tuyến.** Chỉ vài KB, hiện ngay cả khi mạng chậm, sắc nét ở mọi kích thước — thay vì tải file ảnh.
+
+## Bảng màu
+
+| Vai trò | Tên | Mã màu |
+|---|---|---|
+| Chính | Sakura | `#F2637E` |
+| Sâu | Ai (chàm) | `#1B3A6B` |
+| Thành công | Matcha | `#6BBF59` |
+| XP / Chuỗi ngày | Yamabuki | `#F5B942` |
+| Nền | Washi | `#FFF9F2` |
+| Chữ | Sumi | `#1F2430` |
+
+Chú ý khi dùng: chữ trắng trên nền Matcha chỉ đạt tương phản 2.6:1 (**không đạt** WCAG AA) — hãy dùng chữ màu `matcha-800`. Chữ trắng trên nền Sakura đạt 3.4:1 nên chỉ dùng cho chữ từ 16px trở lên và in đậm.
+
+## Triển khai lên Vercel
+
+1. Import repo này vào Vercel (framework tự nhận là Next.js).
+2. Thêm biến môi trường:
+   - `NEXT_PUBLIC_API_URL` → `https://<ten-app>.onrender.com/api/v1`
+   - `NEXT_PUBLIC_SITE_URL` → domain Vercel của bạn
+3. Deploy.
+4. Quay lại backend, thêm domain Vercel vào biến `CORS_ORIGINS`.
+
+> Gói Hobby của Vercel không cho dùng vào mục đích thương mại. Dự án này phi lợi nhuận nên hợp lệ.
+
+## Trạng thái
+
+| Phần | Tình trạng |
+|---|---|
+| Trang giới thiệu | ✅ Xong |
+| Đăng ký / Đăng nhập | ✅ Xong |
+| Xác thực OTP | ✅ Xong |
+| Quên / Đặt lại mật khẩu | ✅ Xong |
+| Bảng điều khiển | ✅ Xong (dữ liệu thật từ API) |
+| Hồ sơ · Đổi mật khẩu · Quản lý thiết bị | ✅ Xong |
+| Bảng chữ cái, Kanji, từ vựng | 🚧 Giai đoạn 3 |
+| Ôn tập SRS | 🚧 Giai đoạn 3 |
+| Luyện viết tay | 🚧 Giai đoạn 3 |
+| Thi thử JLPT | 🚧 Giai đoạn 5 |
+| Trang quản trị | 🚧 Giai đoạn 2 |
+
+## Giấy phép
+
+Dự án phi lợi nhuận, phát hành theo giấy phép MIT. Mọi đóng góp đều được hoan nghênh. 🌸

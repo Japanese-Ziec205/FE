@@ -1,0 +1,125 @@
+'use client';
+
+import { useEffect, type ReactNode } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { BookOpen, Home, LogOut, RefreshCw, Trophy, User } from 'lucide-react';
+
+import { useAuthStore } from '@/lib/auth-store';
+import { cn } from '@/lib/utils';
+
+const NAV = [
+  { href: '/bang-dieu-khien', label: 'Trang chính', icon: Home },
+  { href: '/hoc', label: 'Học bài', icon: BookOpen },
+  { href: '/on-tap', label: 'Ôn tập', icon: RefreshCw },
+  { href: '/thanh-tich', label: 'Thành tích', icon: Trophy },
+  { href: '/ho-so', label: 'Hồ sơ', icon: User },
+];
+
+export default function LearnLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, isLoading, isAuthenticated, logout } = useAuthStore();
+
+  // Bảo vệ phía client. Đây chỉ là lớp trải nghiệm — mọi kiểm tra thật nằm ở backend.
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) router.replace('/dang-nhap');
+  }, [isLoading, isAuthenticated, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-washi">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-sakura-200 border-t-sakura-500" />
+          <p className="mt-4 text-sumi-muted">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) return null;
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/dang-nhap');
+  };
+
+  return (
+    <div className="min-h-screen bg-washi pb-20 md:pb-0">
+      {/* ---------- Thanh trên ---------- */}
+      <header className="sticky top-0 z-40 border-b border-[#E8E2D9] bg-washi/85 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+          <Link href="/bang-dieu-khien" className="flex items-center gap-2">
+            <span className="text-2xl" aria-hidden="true">🌸</span>
+            <span className="hidden text-lg font-bold text-sumi sm:inline">Nihongo Kizuna</span>
+          </Link>
+
+          {/* Điều hướng desktop */}
+          <nav className="hidden items-center gap-1 md:flex">
+            {NAV.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(
+                    'tap-target inline-flex items-center gap-2 rounded-xl px-3 text-sm font-medium transition',
+                    active ? 'bg-sakura-50 text-sakura-700' : 'text-sumi-muted hover:bg-black/5',
+                  )}
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <span className="hidden text-sm font-medium text-sumi sm:inline">
+              {user.displayName}
+            </span>
+            <button
+              onClick={handleLogout}
+              aria-label="Đăng xuất"
+              className="tap-target inline-flex items-center justify-center rounded-xl px-3 text-sumi-muted hover:bg-black/5"
+            >
+              <LogOut className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main id="noi-dung-chinh" className="mx-auto max-w-6xl px-4 py-6">
+        {children}
+      </main>
+
+      {/* ---------- Thanh tab dưới (mobile) ---------- */}
+      <nav
+        aria-label="Điều hướng chính"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E8E2D9] bg-white md:hidden"
+      >
+        <ul className="mx-auto flex max-w-lg">
+          {NAV.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href;
+            return (
+              <li key={href} className="flex-1">
+                <Link
+                  href={href}
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(
+                    'flex flex-col items-center gap-0.5 py-2.5 text-xs font-medium transition',
+                    active ? 'text-sakura-600' : 'text-sumi-muted',
+                  )}
+                >
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                  {label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </div>
+  );
+}

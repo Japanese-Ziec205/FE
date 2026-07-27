@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #fff9f2;
+    --surface: #ffffff;
+    --text: #1f2430;
+    --text-muted: #5a6072;
+    --border: #e8e2d9;
+  }
+
+  .dark {
+    --bg: #141821;
+    --surface: #1d222e;
+    --text: #edeff4;
+    --text-muted: #9aa1b2;
+    --border: #2c3342;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    /* Không bao giờ nhỏ hơn 16px — Kanji nhiều nét ở cỡ nhỏ thành đám mực không đọc nổi */
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Focus ring rõ ràng: mọi chức năng phải dùng được bằng bàn phím */
+  :focus-visible {
+    outline: 2px solid #f2637e;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Tôn trọng người dùng đã tắt hiệu ứng chuyển động trong hệ điều hành */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Chữ Nhật cần cỡ lớn hơn và dòng thoáng hơn để chừa chỗ cho furigana */
+  .text-jp {
+    font-family: var(--font-jp), 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.9;
+  }
+
+  .card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    box-shadow: 0 2px 12px rgba(31, 36, 48, 0.06);
+  }
+
+  /* Vùng chạm tối thiểu 44px — nhiều người dùng chỉ có điện thoại màn hình nhỏ */
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Furigana */
+ruby > rt {
+  font-size: 0.5em;
+  color: var(--text-muted);
+  user-select: none;
+}
