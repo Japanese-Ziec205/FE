@@ -70,8 +70,13 @@ export default function HeroScene({ animated = true }: { animated?: boolean }) {
       gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
       style={{ pointerEvents: 'none' }}
     >
-      {/* Sương mù tạo chiều sâu và giấu rìa scene, khỏi cần vẽ xa */}
-      <fog attach="fog" args={['#FFF9F2', 18, 46]} />
+      {/*
+        Sương mù tạo chiều sâu, nhưng mốc bắt đầu phải nằm SAU vật thể chính.
+        Camera ở z=16, cổng torii ở z=-3 nên cách nhau 19 đơn vị — để mốc sương
+        ở 18 thì chính chủ thể đã chìm trong sương và núi Phú Sĩ (cách 42) gần
+        như tan hẳn vào màu nền.
+      */}
+      <fog attach="fog" args={['#FFF9F2', 30, 75]} />
 
       <ambientLight intensity={0.85} />
       <directionalLight position={[6, 12, 8]} intensity={1.15} color="#FFF3E0" />

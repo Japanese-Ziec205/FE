@@ -1,5 +1,6 @@
 'use client';
 
+import { Component, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useSceneCapability } from '@/hooks/useSceneCapability';
@@ -31,15 +32,51 @@ function StaticBackdrop() {
   );
 }
 
+/**
+ * Nếu WebGL sập lúc chạy (driver lỗi, hết bộ nhớ GPU, trình duyệt chặn) thì
+ * React sẽ gỡ bỏ cả cây component và người dùng nhìn thấy khoảng trắng.
+ * Bắt lỗi ở đây để lùi về ảnh tĩnh — dò năng lực thiết bị trước không thể
+ * lường hết mọi trường hợp hỏng.
+ */
+class SceneErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  override render() {
+    return this.state.failed ? <StaticBackdrop /> : this.props.children;
+  }
+}
+
 export function HeroBackdrop({ dataSaver = false }: { dataSaver?: boolean }) {
   const mode = useSceneCapability(dataSaver);
 
   return (
     <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-      {mode === 'static' ? <StaticBackdrop /> : <HeroScene animated={mode === 'full'} />}
+      {mode === 'static' ? (
+        <StaticBackdrop />
+      ) : (
+        <SceneErrorBoundary>
+          <HeroScene animated={mode === 'full'} />
+        </SceneErrorBoundary>
+      )}
 
-      {/* Lớp phủ chuyển dần để chữ phía trên luôn đủ tương phản, dù nền là gì */}
-      <div className="absolute inset-0 bg-gradient-to-b from-washi via-washi/55 to-washi/85 dark:from-[#141821] dark:via-[#141821]/60 dark:to-[#141821]/90" />
+      {/*
+        Lớp phủ phải đủ để chữ dễ đọc nhưng KHÔNG được che mất cảnh.
+        Trước đây dùng gradient dọc bắt đầu bằng màu kem đục hoàn toàn, kết quả
+        là toàn bộ khung cảnh bị phủ kín.
+
+        Trên máy tính: chỉ làm sáng nửa trái nơi đặt chữ, nửa phải để trong suốt
+        cho thấy cổng torii và núi. Trên điện thoại chữ chiếm hết bề ngang nên
+        dùng một lớp mờ đều nhưng nhẹ.
+      */}
+      <div className="absolute inset-0 bg-washi/60 dark:bg-[#141821]/65 md:hidden" />
+      <div className="absolute inset-0 hidden bg-gradient-to-r from-washi via-washi/40 to-transparent dark:from-[#141821] dark:via-[#141821]/45 md:block" />
+
+      {/* Mép dưới hoà dần vào nền trang để nối liền với phần nội dung kế tiếp */}
+      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-washi dark:to-[#141821]" />
     </div>
   );
 }

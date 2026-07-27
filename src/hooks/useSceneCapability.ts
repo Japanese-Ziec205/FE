@@ -24,10 +24,19 @@ function detectMode(): SceneMode {
   const saveData =
     connection?.saveData === true || ['slow-2g', '2g'].includes(connection?.effectiveType ?? '');
 
-  // --- 3. Năng lực thiết bị ---
-  const cores = navigator.hardwareConcurrency ?? 2;
-  const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 2;
-  const weakDevice = cores <= 2 || memory <= 2;
+  /**
+   * --- 3. Năng lực thiết bị ---
+   *
+   * Chỉ kết luận "máy yếu" khi trình duyệt THỰC SỰ báo một con số thấp.
+   * `navigator.deviceMemory` chỉ có trên Chrome và Edge — Firefox lẫn Safari
+   * đều trả về undefined. Nếu coi "không có API" đồng nghĩa "máy yếu" thì phần
+   * lớn người dùng sẽ không bao giờ thấy cảnh 3D, mà đó chỉ là "không biết"
+   * chứ không phải bằng chứng máy yếu.
+   */
+  const cores = navigator.hardwareConcurrency;
+  const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  const weakDevice =
+    (typeof cores === 'number' && cores <= 2) || (typeof memory === 'number' && memory <= 2);
 
   let hasWebGL = false;
   try {
