@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BookOpen, Heart, PenLine, Sparkles, Timer, Users } from 'lucide-react';
 import { Mascot } from '@/components/ui/Mascot';
+import { HeroBackdrop } from '@/components/scene/HeroBackdrop';
 
 const FEATURES = [
   {
@@ -71,8 +72,9 @@ export default function LandingPage() {
       </header>
 
       {/* ---------- Hero ---------- */}
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
-        <div className="grid items-center gap-10 md:grid-cols-2">
+      <section className="relative min-h-[88vh] overflow-hidden">
+        <HeroBackdrop />
+        <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:py-24 md:grid-cols-2">
           <div className="animate-fade-up">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-matcha-50 px-3 py-1 text-sm font-medium text-matcha-800">
               <Heart className="h-4 w-4" aria-hidden="true" />
@@ -116,6 +118,11 @@ export default function LandingPage() {
               <Mascot pose="wave" className="h-56 w-56 sm:h-72 sm:w-72" />
             </div>
           </div>
+        </div>
+
+        {/* Gợi ý cuộn xuống — camera 3D di chuyển theo scroll nên cần mời người dùng thử */}
+        <div className="absolute inset-x-0 bottom-6 flex justify-center">
+          <span className="animate-float text-sm text-sumi-muted">Cuộn xuống để khám phá ↓</span>
         </div>
       </section>
 
