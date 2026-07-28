@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Che bớt email/SĐT khi hiển thị. */
+/** Che bớt email khi hiển thị. */
 export function maskIdentifier(value: string): string {
   if (value.includes('@')) {
     const [local, domain] = value.split('@');

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { BookOpen, Flame, Lock, PenLine, RefreshCw, Timer, Trophy } from 'lucide-react';
 
 import { Card } from '@/components/ui/Card';
-import { Alert } from '@/components/ui/Alert';
 import { Mascot } from '@/components/ui/Mascot';
 import { useAuthStore } from '@/lib/auth-store';
 import { api } from '@/lib/api-client';
@@ -48,13 +47,6 @@ export default function DashboardPage() {
         </div>
         <Mascot pose="wave" className="hidden h-24 w-24 shrink-0 sm:block" />
       </Card>
-
-      {!user?.isVerified && (
-        <Alert tone="warning" title="Tài khoản chưa xác thực">
-          Bạn vẫn học bình thường, nhưng cần xác thực email hoặc số điện thoại để tham gia
-          diễn đàn và bảng xếp hạng.
-        </Alert>
-      )}
 
       {/* ---------- Ba chỉ số chính ---------- */}
       <div className="grid gap-4 sm:grid-cols-3">

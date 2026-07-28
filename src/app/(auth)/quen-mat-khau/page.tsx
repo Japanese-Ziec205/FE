@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
         <Mascot pose="write" className="mx-auto h-20 w-20" />
         <h1 className="mt-3 text-2xl font-bold text-sumi">Quên mật khẩu?</h1>
         <p className="mt-2 text-sumi-muted">
-          Không sao cả. Nhập email hoặc số điện thoại, chúng mình sẽ gửi mã để bạn đặt lại.
+          Không sao cả. Nhập email của bạn, chúng mình sẽ gửi mã để đặt lại mật khẩu.
         </p>
       </div>
 
@@ -62,9 +62,10 @@ export default function ForgotPasswordPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <Input
-          label="Email hoặc số điện thoại"
-          placeholder="vidu@gmail.com hoặc 0912345678"
-          autoComplete="username"
+          label="Email"
+          type="email"
+          placeholder="vidu@gmail.com"
+          autoComplete="email"
           leftIcon={<AtSign className="h-5 w-5" />}
           error={errors.identifier?.message}
           {...register('identifier')}

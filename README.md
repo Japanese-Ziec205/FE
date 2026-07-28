@@ -51,13 +51,17 @@ src/
 │   ├── (auth)/             đăng ký · đăng nhập · xác thực OTP · quên/đặt lại mật khẩu
 │   └── (learn)/            khu vực cần đăng nhập: bảng điều khiển, hồ sơ, học, ôn tập
 ├── components/
-│   ├── ui/                 Button · Input · Alert · Card · Mascot · ComingSoon
+│   ├── ui/                 Button · Input · Alert · Card · Mascot · States
+│   ├── scene/              ảnh nền trang giới thiệu
 │   └── providers/          AuthProvider
+├── hooks/
+│   └── useApi.ts           tải dữ liệu API + gọi hành động (thay cho React Query)
 └── lib/
     ├── api-client.ts       fetch wrapper + tự động refresh token
     ├── auth-store.ts       trạng thái đăng nhập (Zustand)
     ├── validators.ts       schema zod, khớp với backend
-    ├── types.ts            kiểu dữ liệu API
+    ├── types.ts            kiểu dữ liệu API xác thực
+    ├── learn-types.ts      kiểu dữ liệu API học tập
     └── utils.ts            hàm tiện ích
 ```
 
@@ -71,7 +75,9 @@ src/
 
 Dù sao thì bảo vệ ở frontend cũng chỉ là lớp trải nghiệm — **mọi kiểm tra quyền thật đều nằm ở backend**.
 
-**Một ô nhập cho cả email lẫn số điện thoại.** Không bắt người dùng chọn tab "Email / SĐT". Hệ thống tự nhận diện. Ít thao tác hơn, và nhiều người trong nhóm đối tượng của dự án quen dùng số điện thoại hơn email.
+**Chỉ đăng ký bằng email, và bắt buộc xác thực.** Ban đầu hệ thống nhận cả số điện thoại, nhưng gửi SMS xác thực tại Việt Nam đều mất phí và cần đăng ký brandname — không khả thi với một dự án phi lợi nhuận. Số điện thoại không xác thực được thì chỉ là một ô nhập ai cũng bịa được, tức là mở đường cho tài khoản rác. Đăng ký xong **chưa** có phiên đăng nhập: phải nhập đúng mã 6 số gửi về email mới vào được. Đăng nhập bằng tài khoản chưa xác thực sẽ nhận mã lỗi `AUTH_EMAIL_NOT_VERIFIED` và được đưa thẳng sang màn nhập mã.
+
+**Nền trang giới thiệu là ảnh tĩnh, không phải cảnh 3D.** Bản đầu dựng bằng Three.js, nhưng ba thư viện cộng lại khoảng 900KB phải tải xong mới thấy được gì, lại chạy WebGL liên tục gây hao pin và giật trên máy yếu. Với nhóm đối tượng dùng điện thoại cũ và mạng tính theo dung lượng, đó là cái giá quá đắt cho phần trang trí. Ảnh tĩnh cũng cho bố cục ổn định trên mọi thiết bị nên không cần các lớp thoái lui nữa.
 
 **Giao diện ưu tiên điện thoại đời thấp.** Chữ không bao giờ nhỏ hơn 16px, vùng chạm tối thiểu 44×44px, tôn trọng `prefers-reduced-motion`, mọi chức năng dùng được bằng bàn phím, và không dùng màu làm tín hiệu duy nhất (đúng/sai luôn kèm icon và chữ).
 

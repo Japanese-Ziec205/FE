@@ -42,6 +42,18 @@ function LoginForm() {
       router.push('/bang-dieu-khien');
     } catch (err) {
       if (err instanceof ApiException) {
+        /**
+         * Mật khẩu đúng nhưng email chưa xác thực. Server đã tự gửi lại mã, nên
+         * đưa thẳng người dùng sang màn nhập mã thay vì bắt họ đọc lỗi rồi tự
+         * mò đường — đây là ngõ cụt hay gặp nhất của luồng đăng ký.
+         */
+        if (err.code === 'AUTH_EMAIL_NOT_VERIFIED') {
+          router.push(
+            `/xac-thuc?dinh-danh=${encodeURIComponent(values.identifier)}&muc-dich=verify_email&chua-xac-thuc=1`,
+          );
+          return;
+        }
+
         // Lỗi validate từ server thì gắn đúng vào từng ô nhập
         const issues = err.fieldIssues;
         if (issues.length > 0) {
@@ -80,11 +92,11 @@ function LoginForm() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        {/* Một ô duy nhất cho cả email lẫn SĐT — không bắt người dùng chọn tab */}
         <Input
-          label="Email hoặc số điện thoại"
-          placeholder="vidu@gmail.com hoặc 0912345678"
-          autoComplete="username"
+          label="Email"
+          type="email"
+          placeholder="vidu@gmail.com"
+          autoComplete="email"
           leftIcon={<AtSign className="h-5 w-5" />}
           error={errors.identifier?.message}
           {...register('identifier')}

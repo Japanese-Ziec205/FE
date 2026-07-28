@@ -77,8 +77,7 @@ export default function LandingPage() {
 
         HeroBackdrop nằm ở -z-10 để lùi ra sau chữ. Nhưng `relative` không tạo
         ngữ cảnh xếp lớp, nên lớp âm đó thoát khỏi section và bị vẽ ra SAU nền
-        `bg-washi` đục của <main> — cảnh 3D vẫn chạy nhưng bị nền trang phủ kín,
-        nhìn ra ngoài chỉ thấy một mảng kem phẳng.
+        `bg-washi` đục của <main>, tức là ảnh nền bị chính nền trang phủ kín.
 
         `isolate` (isolation: isolate) buộc section tự tạo ngữ cảnh xếp lớp,
         giữ -z-10 nằm trong phạm vi section và nổi lên trên nền của <main>.
@@ -119,7 +118,7 @@ export default function LandingPage() {
             </div>
 
             <p className="mt-4 text-sm text-sumi-muted">
-              Đăng ký bằng email hoặc số điện thoại · Không cần thẻ ngân hàng
+              Đăng ký bằng email · Không cần thẻ ngân hàng
             </p>
           </div>
 
@@ -131,7 +130,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Gợi ý cuộn xuống — camera 3D di chuyển theo scroll nên cần mời người dùng thử */}
+        {/* Gợi ý cuộn xuống — phần nội dung chính nằm dưới màn hình đầu tiên */}
         <div className="absolute inset-x-0 bottom-6 flex justify-center">
           <span className="animate-float text-sm text-sumi-muted">Cuộn xuống để khám phá ↓</span>
         </div>

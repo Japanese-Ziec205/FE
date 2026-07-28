@@ -53,17 +53,12 @@ export default function RegisterPage() {
         displayName: values.displayName,
       });
 
-      if (result.otpSent) {
-        // Chuyển sang màn nhập OTP, mang theo định danh để không phải gõ lại
-        router.push(
-          `/xac-thuc?dinh-danh=${encodeURIComponent(values.identifier)}&muc-dich=verify_email`,
-        );
-      } else {
-        // Đăng ký bằng SĐT: SMS chưa bật ở giai đoạn 1, cho vào đăng nhập luôn
-        router.push(
-          `/dang-nhap?dang-ky=thanh-cong&dinh-danh=${encodeURIComponent(values.identifier)}`,
-        );
-      }
+      // Đăng ký KHÔNG cấp phiên đăng nhập. Tài khoản chỉ dùng được sau khi
+      // nhập đúng mã gửi về email, nên luôn đi thẳng sang màn nhập mã.
+      void result;
+      router.push(
+        `/xac-thuc?dinh-danh=${encodeURIComponent(values.identifier)}&muc-dich=verify_email`,
+      );
     } catch (err) {
       if (err instanceof ApiException) {
         const issues = err.fieldIssues;
@@ -103,11 +98,12 @@ export default function RegisterPage() {
         />
 
         <Input
-          label="Email hoặc số điện thoại"
-          placeholder="vidu@gmail.com hoặc 0912345678"
-          autoComplete="username"
+          label="Email"
+          type="email"
+          placeholder="vidu@gmail.com"
+          autoComplete="email"
           leftIcon={<AtSign className="h-5 w-5" />}
-          hint="Dùng để đăng nhập và khôi phục tài khoản"
+          hint="Chúng mình sẽ gửi mã xác thực tới địa chỉ này"
           error={errors.identifier?.message}
           {...register('identifier')}
         />

@@ -20,6 +20,9 @@ function VerifyForm() {
 
   const identifier = params.get('dinh-danh') ?? '';
   const purpose = params.get('muc-dich') ?? 'verify_email';
+  // Người dùng bị đá về đây từ màn đăng nhập vì email chưa xác thực. Cần nói rõ
+  // lý do, nếu không họ sẽ tưởng đăng nhập bị lỗi.
+  const cameFromLogin = params.get('chua-xac-thuc') === '1';
 
   const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +138,12 @@ function VerifyForm() {
         </p>
       </div>
 
+      {cameFromLogin && !error && (
+        <Alert tone="info" className="mb-5">
+          Tài khoản của bạn chưa xác thực email nên chưa đăng nhập được. Chúng mình vừa gửi
+          lại mã mới — nhập mã bên dưới là vào học được ngay.
+        </Alert>
+      )}
       {error && (
         <Alert tone="error" className="mb-5">
           {error}

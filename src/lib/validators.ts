@@ -14,20 +14,23 @@ const COMMON_PASSWORDS = new Set([
 ]);
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Đầu số di động Việt Nam hiện hành, chấp nhận cả dạng 0xxx và +84xxx
-const PHONE_VN_RE = /^(?:\+84|0)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9\d)\d{7}$/;
 
 export function isValidIdentifier(raw: string): boolean {
-  const value = raw.trim();
-  if (value.includes('@')) return EMAIL_RE.test(value);
-  return PHONE_VN_RE.test(value.replace(/[\s.\-()]/g, ''));
+  return EMAIL_RE.test(raw.trim());
 }
 
+/**
+ * Chỉ nhận email.
+ *
+ * Hệ thống đã bỏ đăng ký bằng số điện thoại: gửi SMS xác thực tại Việt Nam đều
+ * mất phí và cần đăng ký brandname, không khả thi với dự án phi lợi nhuận. Số
+ * điện thoại không xác thực được thì chỉ là một ô nhập ai cũng bịa được.
+ */
 export const identifierSchema = z
   .string()
   .trim()
-  .min(1, 'Vui lòng nhập email hoặc số điện thoại')
-  .refine(isValidIdentifier, 'Email hoặc số điện thoại không hợp lệ');
+  .min(1, 'Vui lòng nhập địa chỉ email')
+  .refine(isValidIdentifier, 'Địa chỉ email không hợp lệ');
 
 export const passwordSchema = z
   .string()

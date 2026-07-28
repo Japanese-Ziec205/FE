@@ -1,83 +1,39 @@
-'use client';
-
-import { Component, type ReactNode } from 'react';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { useSceneCapability } from '@/hooks/useSceneCapability';
 
 /**
- * Toàn bộ Three.js được nạp động và tắt render phía server.
+ * Nền trang giới thiệu.
  *
- * Ba thư viện three + @react-three/fiber + drei cộng lại khoảng 900KB. Nếu để
- * chúng nằm trong bundle ban đầu thì người dùng máy yếu phải tải hết trước khi
- * nhìn thấy chữ đầu tiên — trong khi phần lớn họ sẽ nhận bản ảnh tĩnh.
+ * Trước đây đây là một cảnh 3D dựng bằng Three.js. Đã bỏ vì ba lý do:
+ *
+ * 1. Ba thư viện three + @react-three/fiber + drei cộng lại khoảng 900KB phải
+ *    tải về trước khi thấy được gì. Dự án nhắm tới người học dùng điện thoại cũ
+ *    và mạng tính theo dung lượng — đó là cái giá quá đắt cho phần trang trí.
+ * 2. Cảnh 3D chạy WebGL liên tục, hao pin và làm máy yếu giật.
+ * 3. Ảnh tĩnh cho ra bố cục ổn định trên mọi thiết bị, không phụ thuộc vào việc
+ *    trình duyệt có bật WebGL hay không, nên không cần ba lớp thoái lui nữa.
+ *
+ * Ảnh được vẽ với nửa trái gần như trống trời, dành riêng cho phần chữ.
  */
-const HeroScene = dynamic(() => import('./HeroScene'), {
-  ssr: false,
-  loading: () => <StaticBackdrop />,
-});
-
-function StaticBackdrop() {
-  return (
-    <Image
-      src="/scene/hero-fallback.png"
-      alt=""
-      fill
-      priority
-      sizes="100vw"
-      className="object-cover object-bottom"
-      // Ảnh trang trí thuần tuý — trình đọc màn hình nên bỏ qua
-      aria-hidden="true"
-    />
-  );
-}
-
-/**
- * Nếu WebGL sập lúc chạy (driver lỗi, hết bộ nhớ GPU, trình duyệt chặn) thì
- * React sẽ gỡ bỏ cả cây component và người dùng nhìn thấy khoảng trắng.
- * Bắt lỗi ở đây để lùi về ảnh tĩnh — dò năng lực thiết bị trước không thể
- * lường hết mọi trường hợp hỏng.
- */
-class SceneErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  override render() {
-    return this.state.failed ? <StaticBackdrop /> : this.props.children;
-  }
-}
-
-export function HeroBackdrop({ dataSaver = false }: { dataSaver?: boolean }) {
-  const mode = useSceneCapability(dataSaver);
-
+export function HeroBackdrop() {
   return (
     <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-      {mode === 'static' ? (
-        <StaticBackdrop />
-      ) : (
-        <SceneErrorBoundary>
-          <HeroScene animated={mode === 'full'} />
-        </SceneErrorBoundary>
-      )}
+      <Image
+        src="/scene/hero-japan.png"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-center"
+      />
 
       {/*
-        Lớp phủ phải đủ để chữ dễ đọc nhưng KHÔNG được che mất cảnh.
-        Trước đây dùng gradient dọc bắt đầu bằng màu kem đục hoàn toàn, kết quả
-        là toàn bộ khung cảnh bị phủ kín.
+        Lớp phủ chỉ làm rõ vùng đặt chữ, không được che mất cảnh.
 
-        Trên máy tính: chỉ làm sáng nửa trái nơi đặt chữ, nửa phải để trong suốt
-        cho thấy cổng torii và núi. Trên điện thoại chữ chiếm hết bề ngang nên
-        dùng một lớp mờ đều nhưng nhẹ.
+        Trên máy tính: đục tới mốc 30%, 70% tới mốc 55% — đúng ranh giới cột chữ
+        trong lưới hai cột — rồi trong dần để lộ cổng torii và núi ở nửa phải.
+        Trên điện thoại chữ chiếm hết bề ngang nên dùng một lớp mờ đều.
       */}
-      <div className="absolute inset-0 bg-washi/70 dark:bg-[#141821]/70 md:hidden" />
-      {/*
-        Mốc `via-…-55%` đặt đúng ranh giới cột chữ (lưới 2 cột, chữ chiếm nửa
-        trái). Nhờ vậy toàn bộ phần chữ nằm trên nền gần như đục, còn từ giữa
-        sang phải mở dần ra cho thấy cổng torii và núi.
-      */}
+      <div className="absolute inset-0 bg-washi/70 dark:bg-[#141821]/75 md:hidden" />
       <div className="absolute inset-0 hidden bg-gradient-to-r from-washi from-30% via-washi/70 via-55% to-transparent dark:from-[#141821] dark:via-[#141821]/70 md:block" />
 
       {/* Mép dưới hoà dần vào nền trang để nối liền với phần nội dung kế tiếp */}
