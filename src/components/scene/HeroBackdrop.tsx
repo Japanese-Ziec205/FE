@@ -72,8 +72,13 @@ export function HeroBackdrop({ dataSaver = false }: { dataSaver?: boolean }) {
         cho thấy cổng torii và núi. Trên điện thoại chữ chiếm hết bề ngang nên
         dùng một lớp mờ đều nhưng nhẹ.
       */}
-      <div className="absolute inset-0 bg-washi/60 dark:bg-[#141821]/65 md:hidden" />
-      <div className="absolute inset-0 hidden bg-gradient-to-r from-washi via-washi/40 to-transparent dark:from-[#141821] dark:via-[#141821]/45 md:block" />
+      <div className="absolute inset-0 bg-washi/70 dark:bg-[#141821]/70 md:hidden" />
+      {/*
+        Mốc `via-…-55%` đặt đúng ranh giới cột chữ (lưới 2 cột, chữ chiếm nửa
+        trái). Nhờ vậy toàn bộ phần chữ nằm trên nền gần như đục, còn từ giữa
+        sang phải mở dần ra cho thấy cổng torii và núi.
+      */}
+      <div className="absolute inset-0 hidden bg-gradient-to-r from-washi from-30% via-washi/70 via-55% to-transparent dark:from-[#141821] dark:via-[#141821]/70 md:block" />
 
       {/* Mép dưới hoà dần vào nền trang để nối liền với phần nội dung kế tiếp */}
       <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-washi dark:to-[#141821]" />

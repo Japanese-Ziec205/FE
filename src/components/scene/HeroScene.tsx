@@ -25,16 +25,18 @@ function CameraRig({ animated }: { animated: boolean }) {
     scrollRef.current = Math.min(1, window.scrollY / max);
     const scroll = scrollRef.current;
 
-    const targetX = state.pointer.x * 2.2;
-    const targetY = 3 + state.pointer.y * 1.1 + scroll * 3.5;
-    const targetZ = 16 - scroll * 5;
+    const targetX = state.pointer.x * 1.6;
+    const targetY = 6.4 + state.pointer.y * 0.9 + scroll * 3.5;
+    const targetZ = 17 - scroll * 5;
 
     // Nội suy mượt thay vì gán thẳng: gán thẳng làm camera giật theo từng
     // sự kiện chuột, còn nội suy cho cảm giác trôi tự nhiên.
     state.camera.position.x += (targetX - state.camera.position.x) * 0.045;
     state.camera.position.y += (targetY - state.camera.position.y) * 0.045;
     state.camera.position.z += (targetZ - state.camera.position.z) * 0.045;
-    state.camera.lookAt(0, 2.2 + scroll * 1.4, 0);
+    // Nhìn xuống thấp để đường chân trời tụt xuống khoảng 2/3 khung hình,
+    // chừa phần trên làm nền trời trống cho chữ.
+    state.camera.lookAt(0, 0.6 + scroll * 1.4, 0);
   });
 
   return null;
@@ -84,26 +86,35 @@ export default function HeroScene({ animated = true }: { animated?: boolean }) {
 
       <CameraRig animated={animated} />
 
-      {/* Lớp xa — núi Phú Sĩ, gần như đứng yên */}
+      {/*
+        Bố cục dồn về nửa PHẢI là có chủ đích.
+
+        Chữ tiêu đề nằm ở cột trái. Trước đây núi Phú Sĩ và cổng torii đều đặt ở
+        x≈0 nên đâm thẳng vào sau chữ, vừa khó đọc vừa rối mắt. Giờ mọi chủ thể
+        đều lệch sang phải, chừa nửa trái gần như trống trời cho phần chữ.
+      */}
+
+      {/* Lớp xa — núi Phú Sĩ. Đẩy xa và thu nhỏ để thành hậu cảnh, không tranh
+          chỗ với chủ thể chính như trước. */}
       <ParallaxGroup factor={0.02} animated={animated}>
-        <MountFuji position={[-1, -0.5, -26]} scale={2.6} />
+        <MountFuji position={[14, -1.2, -34]} scale={2.1} />
       </ParallaxGroup>
 
-      {/* Lớp giữa — chùa và cây */}
+      {/* Lớp giữa — chùa lùi hẳn ra rìa phải */}
       <ParallaxGroup factor={0.05} animated={animated}>
-        <Pagoda position={[8.5, 0, -13]} scale={1.25} />
-        <SakuraTree position={[-9.5, 0, -11]} scale={1.5} seed={1} />
-        <SakuraTree position={[11, 0, -8]} scale={1.15} seed={2} />
+        <Pagoda position={[17, 0, -15]} scale={1.2} />
+        <SakuraTree position={[-15, 0, -13]} scale={1.5} seed={1} />
+        <SakuraTree position={[13, 0, -9]} scale={1.2} seed={2} />
       </ParallaxGroup>
 
-      {/* Lớp gần — cổng torii là tâm điểm */}
+      {/* Lớp gần — cổng torii vẫn là tâm điểm nhưng đứng bên phải */}
       <ParallaxGroup factor={0.09} animated={animated}>
-        <Torii position={[0, 0, -3]} scale={1.35} />
-        <SakuraTree position={[-5.5, 0, 1]} scale={1.25} seed={3} />
-        <SakuraTree position={[6, 0, 0.5]} scale={1.1} seed={4} />
+        <Torii position={[7.5, 0, -4]} scale={1.3} />
+        <SakuraTree position={[-11, 0, 1]} scale={1.3} seed={3} />
+        <SakuraTree position={[15, 0, 1]} scale={1.15} seed={4} />
       </ParallaxGroup>
 
-      <Water position={[0, -0.05, -4]} />
+      <Water position={[4, -0.05, -6]} />
 
       {/* Ở chế độ giảm chuyển động vẫn hiện cánh hoa nhưng đứng yên */}
       <PetalRain count={animated ? 260 : 90} animated={animated} />

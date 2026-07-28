@@ -72,7 +72,18 @@ export default function LandingPage() {
       </header>
 
       {/* ---------- Hero ---------- */}
-      <section className="relative min-h-[88vh] overflow-hidden">
+      {/*
+        `isolate` là bắt buộc, không phải trang trí.
+
+        HeroBackdrop nằm ở -z-10 để lùi ra sau chữ. Nhưng `relative` không tạo
+        ngữ cảnh xếp lớp, nên lớp âm đó thoát khỏi section và bị vẽ ra SAU nền
+        `bg-washi` đục của <main> — cảnh 3D vẫn chạy nhưng bị nền trang phủ kín,
+        nhìn ra ngoài chỉ thấy một mảng kem phẳng.
+
+        `isolate` (isolation: isolate) buộc section tự tạo ngữ cảnh xếp lớp,
+        giữ -z-10 nằm trong phạm vi section và nổi lên trên nền của <main>.
+      */}
+      <section className="relative isolate min-h-[88vh] overflow-hidden">
         <HeroBackdrop />
         <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:py-24 md:grid-cols-2">
           <div className="animate-fade-up">
