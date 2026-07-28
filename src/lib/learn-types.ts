@@ -111,6 +111,14 @@ export interface SrsQueueCard {
   state: 'new' | 'learning' | 'review' | 'relearning';
   isOverdue: boolean;
   content: SrsCardContent;
+  /**
+   * Bốn lựa chọn cho chế độ trắc nghiệm, đã xáo trộn sẵn ở máy chủ.
+   *
+   * `null` khi kho chữ chưa đủ để gom ba phương án nhiễu khác biệt — lúc đó
+   * giao diện tự lùi về chế độ thẻ lật. Đáp án đúng nằm trong `content.answer`,
+   * không được đánh dấu riêng ở đây.
+   */
+  choices: string[] | null;
   /** Khoá là '1' | '2' | '3' | '4', giá trị là mô tả kiểu "10 phút", "3 ngày". */
   nextIntervals: Record<string, string>;
 }
