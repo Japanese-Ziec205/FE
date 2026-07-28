@@ -2,10 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Check, ClipboardList, Clock, Info, X } from 'lucide-react';
+import { Check, ClipboardList, Clock, Info, Layers, Lock, X } from 'lucide-react';
 
 import { api } from '@/lib/api-client';
 import { useApi, useAction } from '@/hooks/useApi';
+import { useEntitlements } from '@/hooks/useEntitlements';
+import { useAuthStore } from '@/lib/auth-store';
 import type { ExamGenerated, ExamHistoryItem } from '@/lib/learn-types';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
@@ -46,6 +48,9 @@ const VARIANTS = [
 export default function ExamHomePage() {
   const router = useRouter();
   const history = useApi<ExamHistoryItem[]>('/exams/history');
+  const { canTakeMockExam, isLoading: loadingEntitlements } = useEntitlements();
+
+  const currentLevel = useAuthStore((s) => s.user?.currentLevelCode) ?? 'N5';
 
   const generate = useAction((variant: string) =>
     api.post<ExamGenerated>('/exams/generate', { levelCode: 'N5', variant }),
@@ -67,6 +72,31 @@ export default function ExamHomePage() {
       </header>
 
       {generate.error && <Alert tone="error">{generate.error}</Alert>}
+
+      {!loadingEntitlements && !canTakeMockExam && (
+        <Alert tone="info" title="Thi thử là tính năng trả phí">
+          Học bài và ôn tập vẫn miễn phí như thường. Thi thử cần gói trả phí vì mỗi đề tiêu tốn
+          công biên soạn và chi phí máy chủ đáng kể —{' '}
+          <Link href="/goi-hoc" className="font-semibold underline">
+            xem hai gói tại đây
+          </Link>
+          .
+        </Alert>
+      )}
+
+      {/* Ba mức độ dễ / trung bình / khó nằm ở trang cấp độ, cùng chỗ với kiến thức */}
+      <Link
+        href={`/cap-do/${currentLevel}`}
+        className="card flex items-center gap-3 p-4 transition hover:shadow-card-hover"
+      >
+        <Layers className="h-6 w-6 shrink-0 text-ai-500" aria-hidden="true" />
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-sumi">Chọn đề theo mức độ ({currentLevel})</p>
+          <p className="text-sm text-sumi-muted">
+            Ba mức dễ · trung bình · khó, cùng toàn bộ kiến thức của cấp {currentLevel}.
+          </p>
+        </div>
+      </Link>
 
       {/*
         Quy tắc điểm liệt là thứ khiến nhiều người trượt oan dù tổng điểm cao.
@@ -101,7 +131,12 @@ export default function ExamHomePage() {
             </dl>
 
             <div className="mt-4">
-              {v.available ? (
+              {v.available && !canTakeMockExam ? (
+                <Button fullWidth variant="outline" onClick={() => router.push('/goi-hoc')}>
+                  <Lock className="h-4 w-4" aria-hidden="true" />
+                  Mở khoá thi thử
+                </Button>
+              ) : v.available ? (
                 <Button
                   fullWidth
                   onClick={() => start(v.id)}

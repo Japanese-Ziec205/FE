@@ -38,8 +38,9 @@ function LoginForm() {
   const onSubmit = async (values: LoginForm) => {
     setFormError(null);
     try {
-      await login(values.identifier, values.password);
-      router.push('/bang-dieu-khien');
+      const result = await login(values.identifier, values.password);
+      // Tài khoản cũ tạo trước khi có bước chọn cấp độ cũng phải đi qua đây
+      router.push(result.onboardingCompleted ? '/bang-dieu-khien' : '/chon-cap-do');
     } catch (err) {
       if (err instanceof ApiException) {
         /**

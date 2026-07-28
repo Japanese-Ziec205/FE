@@ -7,6 +7,9 @@ import { useApi } from '@/hooks/useApi';
 import type { Achievement, AchievementTier, GamificationProfile } from '@/lib/learn-types';
 import { Card } from '@/components/ui/Card';
 import { ErrorState, ProgressBar, Spinner, StatTile } from '@/components/ui/States';
+import { LevelLeaderboard } from '@/components/learn/LevelLeaderboard';
+import { useAuthStore } from '@/lib/auth-store';
+import { JLPT_LEVELS, type JlptLevel } from '@/lib/jlpt-levels';
 import { cn } from '@/lib/utils';
 
 /**
@@ -27,6 +30,12 @@ export default function AchievementsPage() {
   const profile = useApi<GamificationProfile>('/gamification/profile');
   const achievements = useApi<Achievement[]>('/gamification/achievements');
   const [onlyUnlocked, setOnlyUnlocked] = useState(false);
+
+  // Mở sẵn bảng của cấp người dùng đang học — họ quan tâm tới bảng đó nhất
+  const currentLevelCode = useAuthStore((s) => s.user?.currentLevelCode);
+  const myLevel = (JLPT_LEVELS as readonly string[]).includes(currentLevelCode ?? '')
+    ? (currentLevelCode as JlptLevel)
+    : 'N5';
 
   const grouped = useMemo(() => {
     const list = achievements.data ?? [];
@@ -147,6 +156,9 @@ export default function AchievementsPage() {
           )}
         </>
       )}
+
+      {/* ---------- Bảng xếp hạng ---------- */}
+      <LevelLeaderboard defaultLevel={myLevel} />
 
       {/* ---------- Huy hiệu ---------- */}
       <section>

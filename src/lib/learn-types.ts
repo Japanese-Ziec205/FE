@@ -82,6 +82,131 @@ export interface Kotowaza {
   culturalNote?: string;
 }
 
+/** Số mục đã nạp vào hệ thống so với số mục kỳ thi thật yêu cầu. */
+export interface CoverageCount {
+  available: number;
+  expected: number;
+}
+
+export interface LevelExamOption {
+  variant: string;
+  name: string;
+  descriptionVi: string;
+  durationMinutes: number;
+  totalRequired: number;
+  maxScore: number;
+  questionCount: number;
+  sections: { code: string; nameVi: string; durationMinutes: number; questionCount: number }[];
+}
+
+export interface LevelOverview {
+  level: string;
+  content: {
+    vocabulary: CoverageCount;
+    kanji: CoverageCount;
+    grammar: CoverageCount;
+  };
+  exams: LevelExamOption[];
+}
+
+// ---------------------------------------------------------------------------
+// Khám phá — khối tự đổi ở trang chính
+// ---------------------------------------------------------------------------
+
+export type DiscoverKind = 'recall' | 'culture' | 'kotowaza';
+
+export interface DiscoverCard {
+  kind: DiscoverKind;
+  key: string;
+  emoji: string;
+  eyebrow: string;
+  title: string;
+  reading: string;
+  body: string;
+  href: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Bảng xếp hạng
+// ---------------------------------------------------------------------------
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  avatarPreset: number;
+  score: number;
+  streak: number;
+  xpLevel: number;
+  breakdown: { kana: number; kanji: number; vocabulary: number; grammar: number };
+  isMe: boolean;
+}
+
+export interface Leaderboard {
+  levelCode: string;
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  entries: LeaderboardEntry[];
+  /** Vị trí của chính người dùng, kể cả khi họ nằm ngoài trang đang xem. */
+  me: LeaderboardEntry | null;
+}
+
+// ---------------------------------------------------------------------------
+// Gói học & thanh toán
+// ---------------------------------------------------------------------------
+
+export interface Plan {
+  code: 'monthly' | 'half_year';
+  nameVi: string;
+  amount: number;
+  durationDays: number;
+  descriptionVi: string;
+}
+
+export interface PlanList {
+  plans: Plan[];
+  /** `false` khi máy chủ chưa có khoá PayOS — giao diện ẩn nút mua. */
+  paymentAvailable: boolean;
+  freeTier: { dailyReviewLimit: number; dailyLessonLimit: number };
+}
+
+/** `limit`/`remaining` là `null` với người đã trả phí, nghĩa là không giới hạn. */
+export interface Quota {
+  used: number;
+  limit: number | null;
+  remaining: number | null;
+}
+
+export interface Entitlements {
+  isPremium: boolean;
+  planCode: 'monthly' | 'half_year' | null;
+  expiresAt: string | null;
+  daysRemaining: number;
+  canTakeMockExam: boolean;
+  reviews: Quota;
+  lessons: Quota;
+}
+
+export interface CheckoutResult {
+  orderCode: number;
+  amount: number;
+  planNameVi: string;
+  checkoutUrl: string;
+  qrCode: string;
+}
+
+export interface PaymentStatus {
+  orderCode: number;
+  planCode: string;
+  planNameVi: string;
+  amount: number;
+  status: 'pending' | 'paid' | 'cancelled' | 'expired' | 'failed';
+  paidAt: string | null;
+  checkoutUrl: string;
+}
+
 // ---------------------------------------------------------------------------
 // Ôn tập (SRS)
 // ---------------------------------------------------------------------------

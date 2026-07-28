@@ -18,7 +18,7 @@ const GOALS = [
   { value: 'hobby', label: 'Sở thích cá nhân' },
 ];
 
-const LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'];
+import { LEVEL_LIST } from '@/lib/jlpt-levels';
 
 /**
  * Các mốc phút mỗi ngày.
@@ -100,7 +100,7 @@ export function LearningGoalCard() {
 
         <div>
           <label htmlFor="cap-do" className="mb-1.5 block text-sm font-medium text-sumi">
-            Cấp độ hướng tới
+            Cấp độ đang học
           </label>
           <select
             id="cap-do"
@@ -108,12 +108,17 @@ export function LearningGoalCard() {
             onChange={(e) => setTarget(e.target.value)}
             className="h-12 w-full rounded-xl border border-[#E8E2D9] bg-white px-3 text-sumi focus:border-sakura-400 focus:outline-none focus:ring-2 focus:ring-sakura-100"
           >
-            {LEVELS.map((l) => (
-              <option key={l} value={l}>
-                {l}
+            {LEVEL_LIST.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.code} — {l.nameVi} ({l.vocabulary.toLocaleString('vi-VN')} từ,{' '}
+                {l.kanji.toLocaleString('vi-VN')} chữ Hán)
               </option>
             ))}
           </select>
+          <p className="mt-2 text-sm text-sumi-muted">
+            Đổi cấp độ sẽ đổi bài học, thẻ ôn tập và đề thi thử theo cấp mới. Tiến độ và thẻ đã
+            học của bạn vẫn được giữ nguyên, không mất đi đâu cả.
+          </p>
         </div>
 
         <fieldset>

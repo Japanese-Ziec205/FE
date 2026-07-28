@@ -2,18 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, Flame, Lock, PenLine, RefreshCw, Timer, Trophy } from 'lucide-react';
+import { BookOpen, Flame, Map, PenLine, RefreshCw, Timer, Trophy } from 'lucide-react';
 
 import { Card } from '@/components/ui/Card';
 import { Mascot } from '@/components/ui/Mascot';
+import { DiscoverCarousel } from '@/components/learn/DiscoverCarousel';
 import { useAuthStore } from '@/lib/auth-store';
 import { api } from '@/lib/api-client';
 import { greetingByHour } from '@/lib/utils';
 import type { UserStats } from '@/lib/types';
 import type { Kotowaza } from '@/lib/learn-types';
 import { useApi } from '@/hooks/useApi';
-
-const LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
@@ -114,54 +113,25 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ---------- Bản đồ lộ trình ---------- */}
-      <Card>
-        <h2 className="text-lg font-semibold text-sumi">Lộ trình của bạn</h2>
-        <p className="mt-1 text-sm text-sumi-muted">
-          Hoàn thành cấp hiện tại để mở khoá cấp tiếp theo.
-        </p>
+      {/*
+        Khối tự đổi, thay cho bản đồ lộ trình N5→N1 trước đây.
 
-        <ol className="mt-5 flex items-center gap-2 overflow-x-auto pb-2">
-          {LEVELS.map((code) => {
-            const isCurrent = code === currentLevel;
-            const isUnlocked = LEVELS.indexOf(code) <= LEVELS.indexOf(currentLevel);
-            return (
-              <li key={code} className="flex shrink-0 items-center gap-2">
-                <div className="text-center">
-                  <div
-                    className={[
-                      'flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold transition',
-                      isCurrent
-                        ? 'bg-sakura-500 text-white ring-4 ring-sakura-200'
-                        : isUnlocked
-                          ? 'bg-matcha-100 text-matcha-800'
-                          : 'bg-[#EFEAE3] text-sumi-muted',
-                    ].join(' ')}
-                  >
-                    {isUnlocked ? code : <Lock className="h-5 w-5" aria-hidden="true" />}
-                  </div>
-                  <p className="mt-1.5 text-xs font-medium text-sumi-muted">
-                    {isCurrent ? 'Đang học' : isUnlocked ? code : code}
-                  </p>
-                </div>
-                {code !== 'N1' && <div className="h-0.5 w-6 rounded bg-[#E8E2D9]" aria-hidden="true" />}
-              </li>
-            );
-          })}
-        </ol>
-      </Card>
+        Bản đồ cũ chỉ nói được đúng một điều — "bạn đang ở N5" — và không đổi
+        suốt hàng tháng, trong khi chiếm chỗ đẹp nhất của trang. Cấp độ hiện tại
+        vẫn hiện ở ô "giờ đã học" phía trên và ở trang cấp độ.
+      */}
+      <DiscoverCarousel />
 
       {/* ---------- Việc hôm nay ---------- */}
       <div>
         <h2 className="mb-3 text-lg font-semibold text-sumi">Hôm nay học gì?</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <TaskCard
             href="/on-tap"
             icon={<RefreshCw className="h-6 w-6" aria-hidden="true" />}
             tone="sakura"
             title="Ôn tập"
             body="Ôn lại những gì sắp quên — ưu tiên số một mỗi ngày."
-            badge="Sắp có"
           />
           <TaskCard
             href="/hoc"
@@ -169,7 +139,6 @@ export default function DashboardPage() {
             tone="ai"
             title="Học bài mới"
             body="Bảng chữ cái Hiragana, Katakana và Kanji cơ bản."
-            badge="Sắp có"
           />
           <TaskCard
             href="/luyen-viet"
@@ -177,7 +146,13 @@ export default function DashboardPage() {
             tone="matcha"
             title="Luyện viết"
             body="Viết tay trên màn hình, chấm từng nét bút."
-            badge="Sắp có"
+          />
+          <TaskCard
+            href={`/cap-do/${currentLevel}`}
+            icon={<Map className="h-6 w-6" aria-hidden="true" />}
+            tone="yamabuki"
+            title={`Kiến thức ${currentLevel}`}
+            body="Toàn bộ từ vựng, Hán tự, ngữ pháp và đề thi thử của cấp này."
           />
         </div>
       </div>
@@ -217,6 +192,7 @@ const TONES = {
   sakura: 'bg-sakura-50 text-sakura-600',
   ai: 'bg-ai-50 text-ai-600',
   matcha: 'bg-matcha-50 text-matcha-700',
+  yamabuki: 'bg-yamabuki-50 text-yamabuki-700',
 } as const;
 
 function TaskCard({

@@ -16,6 +16,7 @@ import {
 import { api } from '@/lib/api-client';
 import { useApi, useAction } from '@/hooks/useApi';
 import { useStudyTracker } from '@/hooks/useStudyTracker';
+import { useEntitlements } from '@/hooks/useEntitlements';
 import type {
   SrsQueue,
   SrsQueueCard,
@@ -81,6 +82,39 @@ const DIRECTION_LABEL: Record<string, string> = {
   recall: 'Nhớ nghĩa — viết chữ',
   handwriting: 'Luyện viết',
 };
+
+/**
+ * Nhắc số lượt ôn còn lại của gói miễn phí.
+ *
+ * Chỉ hiện khi sắp hết (từ 10 lượt trở xuống). Đếm ngược ngay từ lượt đầu tiên
+ * biến việc học thành cuộc chạy đua với hạn mức — đúng thứ nên tránh với người
+ * đang cố gắng duy trì thói quen.
+ */
+function FreeQuotaNotice() {
+  const { isPremium, reviewsRemaining, reviewLimit } = useEntitlements();
+
+  if (isPremium || reviewsRemaining === null || reviewLimit === null) return null;
+  if (reviewsRemaining > 10) return null;
+
+  if (reviewsRemaining <= 0) {
+    return (
+      <Alert tone="warning" title="Hết lượt ôn hôm nay">
+        Gói miễn phí có {reviewLimit} thẻ mỗi ngày. Lượt mới được cấp lại vào ngày mai —{' '}
+        <Link href="/goi-hoc" className="font-semibold underline">
+          hoặc nâng gói để ôn không giới hạn
+        </Link>
+        .
+      </Alert>
+    );
+  }
+
+  return (
+    <Alert tone="info">
+      Còn <strong>{reviewsRemaining}</strong> lượt ôn trong hôm nay (gói miễn phí có{' '}
+      {reviewLimit} thẻ/ngày).
+    </Alert>
+  );
+}
 
 export default function ReviewPage() {
   const { data: queue, error, isLoading, reload } = useApi<SrsQueue>('/srs/queue?limit=30');
@@ -304,6 +338,7 @@ export default function ReviewPage() {
         <Alert tone="warning">{queue.backlogMessage}</Alert>
       )}
       {reviewError && <Alert tone="error">{reviewError}</Alert>}
+      <FreeQuotaNotice />
 
       <div>
         <div className="mb-2 flex items-center justify-between text-sm text-sumi-muted">

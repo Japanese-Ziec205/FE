@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BookOpen, ClipboardList, Home, LogOut, RefreshCw, Settings, Trophy, User } from 'lucide-react';
+import { BookOpen, ClipboardList, Home, LogOut, RefreshCw, Settings, Sparkles, Trophy, User } from 'lucide-react';
 
 import { useAuthStore } from '@/lib/auth-store';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,15 @@ const NAV = [
   { href: '/ho-so', label: 'Hồ sơ', icon: User },
 ];
 
+/**
+ * Gói học không nằm trong thanh điều hướng chính.
+ *
+ * Đây là dự án phi lợi nhuận phục vụ người học khó khăn — nhét lời mời trả tiền
+ * vào thanh điều hướng mà họ nhìn thấy mỗi lần mở trang là sai tinh thần. Người
+ * cần nâng gói sẽ tới đây từ đúng chỗ họ chạm giới hạn (thi thử, hết lượt ôn).
+ */
+const PLANS_LINK = { href: '/goi-hoc', label: 'Gói học', icon: Sparkles };
+
 /** Chỉ ban biên soạn thấy mục này; học viên thì không. */
 const ADMIN_NAV = { href: '/quan-tri', label: 'Quản trị', icon: Settings };
 const ADMIN_ROLES = new Set(['admin', 'lecturer', 'contributor']);
@@ -24,12 +33,17 @@ const ADMIN_ROLES = new Set(['admin', 'lecturer', 'contributor']);
 export default function LearnLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isLoading, isAuthenticated, logout } = useAuthStore();
+  const { user, isLoading, isAuthenticated, onboardingCompleted, logout } = useAuthStore();
 
   // Bảo vệ phía client. Đây chỉ là lớp trải nghiệm — mọi kiểm tra thật nằm ở backend.
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) router.replace('/dang-nhap');
-  }, [isLoading, isAuthenticated, router]);
+    if (isLoading) return;
+    if (!isAuthenticated) router.replace('/dang-nhap');
+    // Chốt chặn đặt ở layout chứ không ở từng trang: chỉ cần sót một trang là
+    // người dùng lọt vào hệ thống mà chưa có cấp độ, và mọi thứ phía sau —
+    // hàng ôn tập, đề thi, bảng xếp hạng — đều không biết phục vụ cấp nào.
+    else if (!onboardingCompleted) router.replace('/chon-cap-do');
+  }, [isLoading, isAuthenticated, onboardingCompleted, router]);
 
   if (isLoading) {
     return (
@@ -42,7 +56,7 @@ export default function LearnLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!isAuthenticated || !user) return null;
+  if (!isAuthenticated || !user || !onboardingCompleted) return null;
 
   const nav = ADMIN_ROLES.has(user.role) ? [...NAV, ADMIN_NAV] : NAV;
 
@@ -83,6 +97,13 @@ export default function LearnLayout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-3">
+            <Link
+              href={PLANS_LINK.href}
+              className="tap-target hidden items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-sumi-muted hover:bg-black/5 sm:inline-flex"
+            >
+              <PLANS_LINK.icon className="h-4 w-4" aria-hidden="true" />
+              {PLANS_LINK.label}
+            </Link>
             <span className="hidden text-sm font-medium text-sumi sm:inline">
               {user.displayName}
             </span>

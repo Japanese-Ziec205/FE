@@ -51,8 +51,11 @@ function VerifyForm() {
         router.push(
           `/dat-lai-mat-khau?dinh-danh=${encodeURIComponent(identifier)}&ma=${encodeURIComponent(code)}`,
         );
-      } else {
+      } else if (result.onboardingCompleted) {
         router.push('/bang-dieu-khien');
+      } else {
+        // Vừa xác thực email xong là lần đầu vào hệ thống — hỏi cấp độ trước.
+        router.push('/chon-cap-do');
       }
     } catch (err) {
       setError(err instanceof ApiException ? err.message : 'Đã có lỗi xảy ra. Vui lòng thử lại.');
