@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BookOpen, Home, LogOut, RefreshCw, Trophy, User } from 'lucide-react';
+import { BookOpen, ClipboardList, Home, LogOut, RefreshCw, Settings, Trophy, User } from 'lucide-react';
 
 import { useAuthStore } from '@/lib/auth-store';
 import { cn } from '@/lib/utils';
@@ -12,9 +12,14 @@ const NAV = [
   { href: '/bang-dieu-khien', label: 'Trang chính', icon: Home },
   { href: '/hoc', label: 'Học bài', icon: BookOpen },
   { href: '/on-tap', label: 'Ôn tập', icon: RefreshCw },
+  { href: '/thi-thu', label: 'Thi thử', icon: ClipboardList },
   { href: '/thanh-tich', label: 'Thành tích', icon: Trophy },
   { href: '/ho-so', label: 'Hồ sơ', icon: User },
 ];
+
+/** Chỉ ban biên soạn thấy mục này; học viên thì không. */
+const ADMIN_NAV = { href: '/quan-tri', label: 'Quản trị', icon: Settings };
+const ADMIN_ROLES = new Set(['admin', 'lecturer', 'contributor']);
 
 export default function LearnLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -39,6 +44,8 @@ export default function LearnLayout({ children }: { children: ReactNode }) {
 
   if (!isAuthenticated || !user) return null;
 
+  const nav = ADMIN_ROLES.has(user.role) ? [...NAV, ADMIN_NAV] : NAV;
+
   const handleLogout = async () => {
     await logout();
     router.replace('/dang-nhap');
@@ -56,7 +63,7 @@ export default function LearnLayout({ children }: { children: ReactNode }) {
 
           {/* Điều hướng desktop */}
           <nav className="hidden items-center gap-1 md:flex">
-            {NAV.map(({ href, label, icon: Icon }) => {
+            {nav.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;
               return (
                 <Link
@@ -100,7 +107,7 @@ export default function LearnLayout({ children }: { children: ReactNode }) {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E8E2D9] bg-white md:hidden"
       >
         <ul className="mx-auto flex max-w-lg">
-          {NAV.map(({ href, label, icon: Icon }) => {
+          {nav.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
               <li key={href} className="flex-1">

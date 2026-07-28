@@ -79,10 +79,27 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
   /** Bỏ qua cơ chế tự refresh — dùng cho chính endpoint refresh/login. */
   skipAuthRetry?: boolean;
+  /**
+   * Trả về NGUYÊN phong bì `{ success, data, meta }` thay vì chỉ `data`.
+   * Cần cho các endpoint phân trang, vì `meta` nằm ngang hàng với `data`.
+   */
+  withEnvelope?: boolean;
 }
 
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+/**
+ * Mặc định chỉ trả về `data` trong phong bì `{ success, data }` — đó là dạng
+ * của gần như mọi endpoint. Riêng các endpoint phân trang còn kèm `meta` nằm
+ * NGANG HÀNG với `data`; dùng `api.getPaged` cho chúng để không mất số trang.
+ */
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { body, skipAuthRetry, headers, ...rest } = options;
+  const { body, skipAuthRetry, withEnvelope, headers, ...rest } = options;
 
   const doFetch = async (): Promise<Response> =>
     fetch(`${API_URL}${path}`, {
@@ -144,11 +161,19 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     );
   }
 
-  return json.data as T;
+  return (withEnvelope ? json : json.data) as T;
+}
+
+export interface Paged<T> {
+  data: T[];
+  meta: PaginationMeta;
 }
 
 export const api = {
   get: <T>(path: string, options?: RequestOptions) => request<T>(path, { ...options, method: 'GET' }),
+  /** Dùng cho endpoint phân trang: giữ lại `meta` mà `get` sẽ vứt đi. */
+  getPaged: <T>(path: string) =>
+    request<Paged<T>>(path, { method: 'GET', withEnvelope: true }),
   post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
     request<T>(path, { ...options, method: 'POST', body }),
   patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>

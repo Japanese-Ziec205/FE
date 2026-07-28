@@ -10,6 +10,8 @@ import { useAuthStore } from '@/lib/auth-store';
 import { api } from '@/lib/api-client';
 import { greetingByHour } from '@/lib/utils';
 import type { UserStats } from '@/lib/types';
+import type { Kotowaza } from '@/lib/learn-types';
+import { useApi } from '@/hooks/useApi';
 
 const LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
@@ -180,13 +182,34 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ---------- Kotowaza ---------- */}
-      <Card className="bg-gradient-to-br from-sakura-50 to-yamabuki-50 text-center">
-        <p className="text-jp text-xl font-bold text-ai-600">継続は力なり</p>
-        <p className="mt-1 text-sm text-sumi-muted">keizoku wa chikara nari</p>
-        <p className="mt-3 font-medium text-sumi">Kiên trì chính là sức mạnh</p>
-      </Card>
+      {/* ---------- Tục ngữ hôm nay ---------- */}
+      <DailyKotowaza />
     </div>
+  );
+}
+
+/**
+ * Tục ngữ của ngày, lấy từ máy chủ.
+ *
+ * Trước đây câu này bị viết cứng trong mã, nên mọi người mở trang đều thấy đúng
+ * một câu suốt nhiều tháng — mất hẳn ý nghĩa "mỗi ngày một câu". Kho tục ngữ
+ * nằm trong CMS nên ban biên soạn thêm câu mới mà không cần lập trình viên.
+ */
+function DailyKotowaza() {
+  const { data } = useApi<Kotowaza>('/public/kotowaza/daily');
+  if (!data) return null;
+
+  return (
+    <Card className="bg-gradient-to-br from-sakura-50 to-yamabuki-50 text-center">
+      <p className="font-jp text-xl font-bold text-ai-500">{data.japanese}</p>
+      <p className="mt-1 font-jp text-sm text-sumi-muted">{data.reading}</p>
+      <p className="mt-3 font-medium text-sumi">{data.meaningVi}</p>
+      {data.vietnameseEquivalent && (
+        <p className="mt-1 text-sm text-sumi-muted">
+          Tục ngữ Việt tương đương: {data.vietnameseEquivalent}
+        </p>
+      )}
+    </Card>
   );
 }
 

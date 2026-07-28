@@ -49,13 +49,22 @@ src/
 │   ├── layout.tsx          layout gốc, nạp font và AuthProvider
 │   ├── globals.css         design token + lớp tiện ích dùng chung
 │   ├── (auth)/             đăng ký · đăng nhập · xác thực OTP · quên/đặt lại mật khẩu
-│   └── (learn)/            khu vực cần đăng nhập: bảng điều khiển, hồ sơ, học, ôn tập
+│   └── (learn)/            khu vực cần đăng nhập
+│       ├── bang-dieu-khien/  trang chính
+│       ├── hoc/              bảng chữ cái · Kanji · từ vựng · ngữ pháp
+│       ├── on-tap/           vòng ôn tập SRS
+│       ├── luyen-viet/       bảng viết tay
+│       ├── thi-thu/          thi thử JLPT: chọn đề · phòng thi · kết quả
+│       ├── thanh-tich/       cấp độ · XP · huy hiệu
+│       ├── ho-so/            tài khoản · mục tiêu học tập · phiên đăng nhập
+│       └── quan-tri/         CMS — chỉ ban biên soạn thấy
 ├── components/
 │   ├── ui/                 Button · Input · Alert · Card · Mascot · States
 │   ├── scene/              ảnh nền trang giới thiệu
 │   └── providers/          AuthProvider
 ├── hooks/
-│   └── useApi.ts           tải dữ liệu API + gọi hành động (thay cho React Query)
+│   ├── useApi.ts           tải dữ liệu API + gọi hành động (thay cho React Query)
+│   └── useStudyTracker.ts  nhịp báo ghi nhận giờ học
 └── lib/
     ├── api-client.ts       fetch wrapper + tự động refresh token
     ├── auth-store.ts       trạng thái đăng nhập (Zustand)
@@ -78,6 +87,10 @@ Dù sao thì bảo vệ ở frontend cũng chỉ là lớp trải nghiệm — *
 **Chỉ đăng ký bằng email, và bắt buộc xác thực.** Ban đầu hệ thống nhận cả số điện thoại, nhưng gửi SMS xác thực tại Việt Nam đều mất phí và cần đăng ký brandname — không khả thi với một dự án phi lợi nhuận. Số điện thoại không xác thực được thì chỉ là một ô nhập ai cũng bịa được, tức là mở đường cho tài khoản rác. Đăng ký xong **chưa** có phiên đăng nhập: phải nhập đúng mã 6 số gửi về email mới vào được. Đăng nhập bằng tài khoản chưa xác thực sẽ nhận mã lỗi `AUTH_EMAIL_NOT_VERIFIED` và được đưa thẳng sang màn nhập mã.
 
 **Nền trang giới thiệu là ảnh tĩnh, không phải cảnh 3D.** Bản đầu dựng bằng Three.js, nhưng ba thư viện cộng lại khoảng 900KB phải tải xong mới thấy được gì, lại chạy WebGL liên tục gây hao pin và giật trên máy yếu. Với nhóm đối tượng dùng điện thoại cũ và mạng tính theo dung lượng, đó là cái giá quá đắt cho phần trang trí. Ảnh tĩnh cũng cho bố cục ổn định trên mọi thiết bị nên không cần các lớp thoái lui nữa.
+
+**Nhịp báo giờ học phải có dao động.** Backend đánh dấu là đáng ngờ khi 6 nhịp gần nhất lệch nhau dưới 0,5 giây — vì script tự động gửi đúng 60,0 giây một lần còn người thật thì không. Một `setInterval(60_000)` chạy trên máy nối mạng tốt lại tạo ra đúng kiểu nhịp đều đó, và giờ học sẽ bị lặng lẽ loại bỏ mà không báo lỗi gì. Vì vậy `useStudyTracker` gửi mỗi 55–75 giây ngẫu nhiên. Client cũng KHÔNG bao giờ gửi lên "tôi đã học bao nhiêu phút" — nó chỉ báo "tôi vẫn ở đây", thời lượng do server tự tính.
+
+**Đồng hồ thi lấy theo máy chủ.** Phòng thi nhận `serverTime` và `sectionDeadline` từ API, đo độ lệch với đồng hồ máy người dùng một lần rồi trừ đi ở mọi phép tính sau đó. Đếm bằng đồng hồ máy thì chỉnh giờ hệ thống là tự cho mình thêm thời gian.
 
 **Giao diện ưu tiên điện thoại đời thấp.** Chữ không bao giờ nhỏ hơn 16px, vùng chạm tối thiểu 44×44px, tôn trọng `prefers-reduced-motion`, mọi chức năng dùng được bằng bàn phím, và không dùng màu làm tín hiệu duy nhất (đúng/sai luôn kèm icon và chữ).
 

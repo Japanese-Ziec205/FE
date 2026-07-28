@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Flame, PartyPopper, RefreshCw, Sparkles } from 'lucide-react';
+import { AlertTriangle, Flame, PartyPopper, RefreshCw, RotateCcw, Sparkles } from 'lucide-react';
 
 import { api } from '@/lib/api-client';
-import { useApi } from '@/hooks/useApi';
+import { useApi, useAction } from '@/hooks/useApi';
+import { useStudyTracker } from '@/hooks/useStudyTracker';
 import type {
   SrsQueue,
   SrsQueueCard,
@@ -49,6 +50,9 @@ const DIRECTION_LABEL: Record<string, string> = {
 
 export default function ReviewPage() {
   const { data: queue, error, isLoading, reload } = useApi<SrsQueue>('/srs/queue?limit=30');
+
+  // Ghi nhận giờ học suốt thời gian ở trang này
+  useStudyTracker('srs');
 
   // Bản sao cục bộ để đi hết lượt mà không phải gọi lại API sau mỗi thẻ
   const [cards, setCards] = useState<SrsQueueCard[]>([]);
@@ -392,13 +396,81 @@ function SrsSummary() {
         </Card>
       )}
 
-      {data.leeches > 0 && (
-        <Alert tone="info" className="mt-3">
-          Có {data.leeches} chữ bạn quên đi quên lại nhiều lần. Đó là chuyện bình thường — hãy
-          thử nghĩ một mẹo nhớ khác cho riêng chúng.
-        </Alert>
-      )}
+      {data.leeches > 0 && <LeechPanel count={data.leeches} />}
     </section>
+  );
+}
+
+/**
+ * Danh sách thẻ "khó nhằn".
+ *
+ * Backend đánh dấu một thẻ là leech khi người học quên nó quá 8 lần. Cách xử lý
+ * đúng KHÔNG phải là ép ôn thêm — lặp lại một cách ghi nhớ đã thất bại tám lần
+ * thì lần thứ chín cũng thất bại. Cần đổi cách tiếp cận, hoặc tạm gác lại.
+ * Nút "học lại từ đầu" đưa thẻ về trạng thái mới để bắt đầu lại nhẹ nhàng.
+ */
+function LeechPanel({ count }: { count: number }) {
+  const { data, isLoading, reload } = useApi<SrsQueueCard[]>('/srs/leeches');
+  const [open, setOpen] = useState(false);
+
+  const reset = useAction(async (cardId: string) => {
+    const result = await api.post(`/srs/cards/${cardId}/reset`);
+    reload();
+    return result;
+  });
+
+  return (
+    <Card className="mt-3">
+      <div className="flex flex-wrap items-start gap-3">
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-yamabuki-600" aria-hidden="true" />
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-sumi">{count} chữ đang làm khó bạn</p>
+          <p className="mt-0.5 text-sm text-sumi-muted">
+            Bạn quên đi quên lại chúng nhiều lần. Đó là chuyện bình thường và không có nghĩa
+            là bạn kém — chỉ là cách nhớ hiện tại chưa hợp với những chữ này.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)}>
+          {open ? 'Ẩn danh sách' : 'Xem danh sách'}
+        </Button>
+      </div>
+
+      {open && (
+        <div className="mt-4">
+          {isLoading ? (
+            <Spinner label="Đang tải..." />
+          ) : (
+            <ul className="space-y-2">
+              {(data ?? []).map((card) => (
+                <li
+                  key={card.cardId}
+                  className="flex items-center gap-3 rounded-xl bg-washi px-3 py-2"
+                >
+                  <span className="font-jp text-xl text-sumi">{card.content.prompt}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-sumi-muted">
+                    {card.content.answer}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => reset.run(card.cardId)}
+                    disabled={reset.isRunning}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                    Học lại từ đầu
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {reset.error && (
+            <Alert tone="error" className="mt-2">
+              {reset.error}
+            </Alert>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }
 

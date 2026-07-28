@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Eraser, Eye, EyeOff, Undo2 } from 'lucide-react';
 
 import { useApi } from '@/hooks/useApi';
+import { useStudyTracker } from '@/hooks/useStudyTracker';
 import type { KanaChart, KanaItem } from '@/lib/learn-types';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
@@ -17,6 +18,8 @@ type Stroke = Point[];
 const CANVAS_SIZE = 320;
 
 export default function WritingPage() {
+  useStudyTracker('writing');
+
   const [script, setScript] = useState<'hiragana' | 'katakana'>('hiragana');
   const { data, error, isLoading, reload } = useApi<KanaChart>(
     `/public/kana/chart?script=${script}`,

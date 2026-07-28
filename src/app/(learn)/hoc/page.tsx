@@ -5,6 +5,7 @@ import { BookOpen, Check, Plus, X } from 'lucide-react';
 
 import { api } from '@/lib/api-client';
 import { useApi, useAction } from '@/hooks/useApi';
+import { useStudyTracker } from '@/hooks/useStudyTracker';
 import type {
   EnrollResult,
   GrammarList,
@@ -14,6 +15,7 @@ import type {
   KanjiItem,
   Paginated,
   SrsItemType,
+  VocabularyList,
 } from '@/lib/learn-types';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
@@ -21,12 +23,13 @@ import { Card } from '@/components/ui/Card';
 import { EmptyState, ErrorState, Spinner } from '@/components/ui/States';
 import { cn } from '@/lib/utils';
 
-type Tab = 'hiragana' | 'katakana' | 'kanji' | 'ngu-phap';
+type Tab = 'hiragana' | 'katakana' | 'kanji' | 'tu-vung' | 'ngu-phap';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'hiragana', label: 'Hiragana' },
   { id: 'katakana', label: 'Katakana' },
   { id: 'kanji', label: 'Kanji N5' },
+  { id: 'tu-vung', label: 'Từ vựng N5' },
   { id: 'ngu-phap', label: 'Ngữ pháp N5' },
 ];
 
@@ -39,6 +42,8 @@ const KANA_GROUP_LABEL: Record<KanaGroup, string> = {
 };
 
 export default function StudyPage() {
+  useStudyTracker('practice');
+
   const [tab, setTab] = useState<Tab>('hiragana');
 
   /**
@@ -118,6 +123,7 @@ export default function StudyPage() {
       {tab === 'hiragana' && <KanaPanel script="hiragana" selected={selected} onToggle={toggle} />}
       {tab === 'katakana' && <KanaPanel script="katakana" selected={selected} onToggle={toggle} />}
       {tab === 'kanji' && <KanjiPanel selected={selected} onToggle={toggle} />}
+      {tab === 'tu-vung' && <VocabularyPanel selected={selected} onToggle={toggle} />}
       {tab === 'ngu-phap' && <GrammarPanel />}
 
       {/*
@@ -407,6 +413,106 @@ function KanjiPanel({
                   <dd>{kanji.strokeCount}</dd>
                 </div>
               </dl>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Từ vựng
+// ---------------------------------------------------------------------------
+
+function VocabularyPanel({
+  selected,
+  onToggle,
+}: {
+  selected: Set<string>;
+  onToggle: (type: SrsItemType, key: string) => void;
+}) {
+  const [topic, setTopic] = useState('');
+  const path = useMemo(() => {
+    const params = new URLSearchParams({ level: 'N5', limit: '200' });
+    if (topic) params.set('topic', topic);
+    return `/public/vocabulary?${params.toString()}`;
+  }, [topic]);
+
+  const { data, error, isLoading, reload } = useApi<VocabularyList>(path);
+
+  if (isLoading) return <Spinner label="Đang tải từ vựng..." />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (!data || data.items.length === 0) {
+    return <EmptyState title="Chưa có từ vựng" body="Kho từ vựng chưa được nạp dữ liệu." />;
+  }
+
+  return (
+    <div>
+      {/*
+        Lọc theo chủ đề vì học từ theo cụm nghĩa (gia đình, thời tiết, đồ ăn)
+        dễ nhớ hơn nhiều so với học một danh sách xếp theo bảng chữ cái.
+      */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <label htmlFor="chu-de" className="text-sm text-sumi-muted">
+          Chủ đề
+        </label>
+        <select
+          id="chu-de"
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          className="h-10 rounded-xl border border-[#E8E2D9] bg-white px-3 text-sm text-sumi focus:border-sakura-400 focus:outline-none"
+        >
+          <option value="">Tất cả ({data.total} từ)</option>
+          {data.topics.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {data.items.map((v) => {
+          const isSelected = selected.has(`vocabulary:${v._id}`);
+          return (
+            <Card key={v._id} className={cn('p-4', isSelected && 'ring-2 ring-sakura-500')}>
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-jp text-2xl text-sumi">{v.word}</p>
+                  <p className="font-jp text-sm text-sakura-600">{v.reading}</p>
+                  <p className="mt-1 text-sm text-sumi-muted">{v.meaningsVi.join(', ')}</p>
+                  {v.topics.length > 0 && (
+                    <p className="mt-1.5 text-xs text-sumi-muted">{v.topics.join(' · ')}</p>
+                  )}
+                </div>
+
+                {/*
+                  Khoá của thẻ từ vựng là _id chứ không phải chữ viết: backend
+                  tra từ vựng theo ObjectId, khác với kana/kanji tra theo ký tự.
+                */}
+                <button
+                  onClick={() => onToggle('vocabulary', v._id)}
+                  aria-pressed={isSelected}
+                  aria-label={
+                    isSelected
+                      ? `Bỏ ${v.word} khỏi bộ ôn tập`
+                      : `Thêm ${v.word} vào bộ ôn tập`
+                  }
+                  className={cn(
+                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition',
+                    isSelected
+                      ? 'bg-sakura-500 text-white'
+                      : 'bg-black/5 text-sumi-muted hover:bg-sakura-100',
+                  )}
+                >
+                  {isSelected ? (
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                  )}
+                </button>
+              </div>
             </Card>
           );
         })}

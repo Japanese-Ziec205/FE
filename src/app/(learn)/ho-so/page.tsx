@@ -14,6 +14,7 @@ import { api, ApiException } from '@/lib/api-client';
 import { changePasswordSchema, type ChangePasswordForm } from '@/lib/validators';
 import { formatRelativeVi } from '@/lib/utils';
 import type { SessionInfo } from '@/lib/types';
+import { LearningGoalCard } from '@/components/learn/LearningGoalCard';
 
 export default function ProfilePage() {
   const { user, refreshUser, logout } = useAuthStore();
@@ -163,6 +164,9 @@ export default function ProfilePage() {
           </Button>
         </div>
       </Card>
+
+      {/* ---------- Mục tiêu học tập ---------- */}
+      <LearningGoalCard />
 
       {/* ---------- Đổi mật khẩu ---------- */}
       <Card>

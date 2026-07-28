@@ -207,3 +207,192 @@ export interface Achievement {
   unlockedAt?: string | null;
   progress: number;
 }
+
+// ---------------------------------------------------------------------------
+// Thi thử JLPT
+// ---------------------------------------------------------------------------
+
+export interface ExamPassage {
+  title: string;
+  body: string;
+}
+
+export interface ExamQuestion {
+  order: number;
+  mondaiCode: string;
+  format: 'mcq_single' | 'sentence_order' | string;
+  stem: string;
+  passage: ExamPassage | null;
+  /** Dạng sắp xếp câu: các mảnh ĐÃ xáo trộn. Thứ tự đúng không bao giờ gửi xuống. */
+  pieces: string[] | null;
+  starPosition: number | null;
+  options: { id: string; text: string }[];
+  userAnswer: unknown;
+  flaggedByUser: boolean;
+}
+
+export interface ExamSection {
+  code: string;
+  nameVi: string;
+  durationMinutes: number;
+  startedAt: string | null;
+  endedAt: string | null;
+  lockedByTimeout: boolean;
+  questions: ExamQuestion[];
+}
+
+export interface ExamAttempt {
+  attemptId: string;
+  code: string;
+  status: 'in_progress' | 'graded' | 'abandoned';
+  currentSectionCode: string | null;
+  /** Mốc thời gian của MÁY CHỦ — đồng hồ máy người dùng không đáng tin. */
+  serverTime: string;
+  sectionDeadline: string | null;
+  totalRequired?: number;
+  sections: ExamSection[];
+}
+
+export interface ExamGenerated {
+  attemptId: string;
+  code: string;
+  levelCode: string;
+  totalDurationMinutes: number;
+  totalQuestions: number;
+  overlapRatio: number;
+  sections: { code: string; nameVi: string; durationMinutes: number; questionCount: number }[];
+  totalRequired: number;
+  maxTotal: number;
+}
+
+export interface ExamSectionScore {
+  code: string;
+  nameVi: string;
+  raw: number;
+  rawTotal: number;
+  scaled: number;
+  maxScaled: number;
+  minRequired: number;
+  passed: boolean;
+}
+
+export interface ExamResult {
+  scaledScore: number;
+  totalRequired: number;
+  maxTotal: number;
+  passed: boolean;
+  failReason: 'total_below' | 'section_below' | null;
+  failExplanation: string | null;
+  sectionScores: ExamSectionScore[];
+  byMondai: { code: string; nameVi: string; correct: number; total: number; correctRate: number }[];
+  weakMondai: { code: string; nameVi: string; correct: number; total: number }[];
+  strongMondai: { code: string; nameVi: string; correct: number; total: number }[];
+  skillRadar: Record<string, number>;
+  recommendations: { type: string; reason: string; priority: number }[];
+}
+
+export interface ExamReviewQuestion {
+  order: number;
+  mondaiCode: string;
+  format: string;
+  stem: string;
+  passage: ExamPassage | null;
+  correctSequence: string[] | null;
+  options: { id: string; text: string }[];
+  correctOptionIds: string[];
+  explanationVi: string;
+  userAnswer: unknown;
+  isCorrect: boolean | null;
+}
+
+export type ExamReview = { code: string; nameVi: string; questions: ExamReviewQuestion[] }[];
+
+export interface ExamHistoryItem {
+  attemptId: string;
+  code: string;
+  levelCode: string;
+  submittedAt: string;
+  scaledScore: number;
+  passed: boolean;
+}
+
+export interface PoolHealth {
+  levelCode: string;
+  canGenerate: boolean;
+  overallStatus: 'healthy' | 'warning' | 'insufficient';
+  mondai: {
+    code: string;
+    nameVi: string;
+    required: number;
+    available: number;
+    recommendedMin: number;
+    status: 'healthy' | 'warning' | 'insufficient';
+    message: string | null;
+  }[];
+}
+
+// ---------------------------------------------------------------------------
+// Quản trị nội dung (CMS)
+// ---------------------------------------------------------------------------
+
+export type ContentType = 'vocabulary' | 'grammar' | 'sentence' | 'kanji' | 'kana' | 'kotowaza';
+
+export type ContentStatus = 'draft' | 'pending_review' | 'approved' | 'published' | 'archived';
+
+/**
+ * Bản ghi nội dung ở dạng chung.
+ *
+ * Mỗi loại nội dung có trường riêng (word/pattern/character…), nên chỉ khai báo
+ * phần chung rồi cho phép truy cập trường tuỳ ý — giao diện danh sách chỉ cần
+ * nhãn, trạng thái và cấp độ.
+ */
+export interface ContentItem {
+  _id: string;
+  status: ContentStatus;
+  jlptLevel?: string;
+  version?: number;
+  updatedAt?: string;
+  [key: string]: unknown;
+}
+
+export interface PaginatedMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface ReviewTask {
+  _id: string;
+  targetType: string;
+  targetId: string;
+  targetLabel?: string;
+  status: string;
+  submittedBy?: { displayName?: string } | string | null;
+  createdAt: string;
+}
+
+export interface FuriganaSegment {
+  text: string;
+  reading: string | null;
+}
+
+export interface VocabularyItem {
+  _id: string;
+  word: string;
+  reading: string;
+  meaningsVi: string[];
+  partOfSpeech: string[];
+  topics: string[];
+  jlptLevel: string;
+  furiganaSegments: FuriganaSegment[];
+}
+
+export interface VocabularyList {
+  level: string;
+  page: number;
+  limit: number;
+  total: number;
+  topics: string[];
+  items: VocabularyItem[];
+}
