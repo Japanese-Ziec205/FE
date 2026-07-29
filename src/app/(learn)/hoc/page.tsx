@@ -21,17 +21,27 @@ import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState, ErrorState, Spinner } from '@/components/ui/States';
+import { useAuthStore } from '@/lib/auth-store';
+import { JLPT_LEVELS, type JlptLevel } from '@/lib/jlpt-levels';
 import { cn } from '@/lib/utils';
 
 type Tab = 'hiragana' | 'katakana' | 'kanji' | 'tu-vung' | 'ngu-phap';
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'hiragana', label: 'Hiragana' },
-  { id: 'katakana', label: 'Katakana' },
-  { id: 'kanji', label: 'Kanji N5' },
-  { id: 'tu-vung', label: 'Từ vựng N5' },
-  { id: 'ngu-phap', label: 'Ngữ pháp N5' },
-];
+/**
+ * Nhãn của ba thẻ sau phụ thuộc cấp độ đang xem, nên dựng ở lúc render.
+ *
+ * Hai bảng chữ cái thì KHÔNG gắn cấp độ: Hiragana và Katakana là nền móng
+ * chung, người học N2 vẫn dùng đúng bảng đó chứ không có "Hiragana N2".
+ */
+function tabsFor(level: string): { id: Tab; label: string }[] {
+  return [
+    { id: 'hiragana', label: 'Hiragana' },
+    { id: 'katakana', label: 'Katakana' },
+    { id: 'kanji', label: `Kanji ${level}` },
+    { id: 'tu-vung', label: `Từ vựng ${level}` },
+    { id: 'ngu-phap', label: `Ngữ pháp ${level}` },
+  ];
+}
 
 const KANA_GROUP_LABEL: Record<KanaGroup, string> = {
   gojuon: 'Bảng gốc (Gojūon)',
@@ -45,6 +55,22 @@ export default function StudyPage() {
   useStudyTracker('practice');
 
   const [tab, setTab] = useState<Tab>('hiragana');
+
+  /**
+   * Cấp độ đang xem.
+   *
+   * Trước đây trang này viết cứng N5 ở cả nhãn lẫn truy vấn, nên người chọn N2
+   * vẫn bị đưa kho N5 mà không có dấu hiệu gì. Mặc định giờ bám theo cấp độ
+   * người dùng đã chọn, và vẫn cho chuyển sang cấp khác để tra cứu — người học
+   * N2 thỉnh thoảng vẫn cần lật lại từ vựng N5.
+   *
+   * `null` nghĩa là chưa đụng vào, cứ bám theo hồ sơ; tránh phải đồng bộ bằng
+   * useEffect và tránh cả việc khoá cứng giá trị lúc trang mới tải xong.
+   */
+  const profileLevel = useAuthStore((s) => s.user?.currentLevelCode);
+  const [levelOverride, setLevelOverride] = useState<JlptLevel | null>(null);
+  const level = levelOverride ?? (profileLevel as JlptLevel | undefined) ?? 'N5';
+  const TABS = tabsFor(level);
 
   /**
    * Các mục đang chọn để thêm vào bộ ôn.
@@ -98,6 +124,36 @@ export default function StudyPage() {
         </p>
       </header>
 
+      {/* Đổi cấp độ để tra cứu — không đụng tới cấp độ đã chọn trong hồ sơ */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-medium text-sumi-muted">Cấp độ:</span>
+        {JLPT_LEVELS.map((code) => (
+          <button
+            key={code}
+            type="button"
+            aria-pressed={level === code}
+            onClick={() => setLevelOverride(code)}
+            className={cn(
+              'rounded-xl px-3 py-1.5 text-sm font-semibold transition',
+              level === code
+                ? 'bg-ai-500 text-white'
+                : 'bg-white text-sumi-muted ring-1 ring-[#E8E2D9] hover:bg-ai-50',
+            )}
+          >
+            {code}
+          </button>
+        ))}
+        {levelOverride && levelOverride !== profileLevel && (
+          <button
+            type="button"
+            onClick={() => setLevelOverride(null)}
+            className="text-sm font-medium text-sakura-600 hover:underline"
+          >
+            Về cấp {profileLevel} của bạn
+          </button>
+        )}
+      </div>
+
       <div role="tablist" aria-label="Nội dung học" className="flex flex-wrap gap-2">
         {TABS.map(({ id, label }) => (
           <button
@@ -122,9 +178,16 @@ export default function StudyPage() {
 
       {tab === 'hiragana' && <KanaPanel script="hiragana" selected={selected} onToggle={toggle} />}
       {tab === 'katakana' && <KanaPanel script="katakana" selected={selected} onToggle={toggle} />}
-      {tab === 'kanji' && <KanjiPanel selected={selected} onToggle={toggle} />}
-      {tab === 'tu-vung' && <VocabularyPanel selected={selected} onToggle={toggle} />}
-      {tab === 'ngu-phap' && <GrammarPanel />}
+      {/*
+        key={level} để React dựng lại panel khi đổi cấp độ. Không có nó, bộ lọc
+        chủ đề của cấp cũ vẫn còn nguyên và truy vấn cấp mới bằng một chủ đề
+        không tồn tại — kết quả là danh sách trống mà không rõ vì sao.
+      */}
+      {tab === 'kanji' && <KanjiPanel key={level} level={level} selected={selected} onToggle={toggle} />}
+      {tab === 'tu-vung' && (
+        <VocabularyPanel key={level} level={level} selected={selected} onToggle={toggle} />
+      )}
+      {tab === 'ngu-phap' && <GrammarPanel key={level} level={level} />}
 
       {/*
         Thanh hành động nổi ở đáy màn hình.
@@ -154,6 +217,29 @@ export default function StudyPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Kho của cấp độ này chưa được nạp.
+ *
+ * Nói thẳng là kho CHƯA CÓ, chứ không để một danh sách trống trơn mặc người
+ * học tự đoán. Hiện tại chỉ N5 có đủ dữ liệu; các cấp trên mới có ma trận đề
+ * và một phần ngữ pháp. Người đang học N2 mở trang này phải hiểu ngay rằng
+ * không phải họ bấm nhầm.
+ */
+function NotSeededYet({ level, what }: { level: JlptLevel; what: string }) {
+  return (
+    <EmptyState
+      title={`Kho ${what} ${level} chưa được nạp`}
+      body={
+        level === 'N5'
+          ? `Kho ${what} chưa có dữ liệu. Nếu bạn là quản trị viên, hãy chạy lệnh seed.`
+          : `Hiện mới có đủ ${what} cho cấp N5 — các cấp cao hơn đang được biên soạn dần. ` +
+            `Bạn vẫn xem được ${what} N5 bằng cách bấm N5 ở hàng cấp độ phía trên.`
+      }
+      icon={<BookOpen className="h-10 w-10" />}
+    />
   );
 }
 
@@ -332,26 +418,28 @@ function KanaDetail({ kana, onClose }: { kana: KanaItem; onClose: () => void }) 
 // ---------------------------------------------------------------------------
 
 function KanjiPanel({
+  level,
   selected,
   onToggle,
 }: {
+  level: JlptLevel;
   selected: Set<string>;
   onToggle: (type: SrsItemType, key: string) => void;
 }) {
   const { data, error, isLoading, reload } = useApi<Paginated<KanjiItem>>(
-    '/public/kanji?level=N5&limit=120',
+    `/public/kanji?level=${level}&limit=120`,
   );
 
   if (isLoading) return <Spinner label="Đang tải Kanji..." />;
   if (error) return <ErrorState message={error} onRetry={reload} />;
   if (!data || data.items.length === 0) {
-    return <EmptyState title="Chưa có Kanji" body="Kho Kanji chưa được nạp dữ liệu." />;
+    return <NotSeededYet level={level} what="Kanji" />;
   }
 
   return (
     <div>
       <p className="mb-3 text-sm text-sumi-muted">
-        {data.total} chữ Kanji cấp N5. Âm Hán-Việt là lợi thế riêng của người Việt — nhớ được
+        {data.total} chữ Kanji cấp {level}. Âm Hán-Việt là lợi thế riêng của người Việt — nhớ được
         âm này thì đoán nghĩa nhanh hơn hẳn.
       </p>
 
@@ -426,25 +514,36 @@ function KanjiPanel({
 // ---------------------------------------------------------------------------
 
 function VocabularyPanel({
+  level,
   selected,
   onToggle,
 }: {
+  level: JlptLevel;
   selected: Set<string>;
   onToggle: (type: SrsItemType, key: string) => void;
 }) {
   const [topic, setTopic] = useState('');
   const path = useMemo(() => {
-    const params = new URLSearchParams({ level: 'N5', limit: '200' });
+    const params = new URLSearchParams({ level, limit: '200' });
     if (topic) params.set('topic', topic);
     return `/public/vocabulary?${params.toString()}`;
-  }, [topic]);
+  }, [level, topic]);
 
   const { data, error, isLoading, reload } = useApi<VocabularyList>(path);
 
   if (isLoading) return <Spinner label="Đang tải từ vựng..." />;
   if (error) return <ErrorState message={error} onRetry={reload} />;
   if (!data || data.items.length === 0) {
-    return <EmptyState title="Chưa có từ vựng" body="Kho từ vựng chưa được nạp dữ liệu." />;
+    // Có lọc chủ đề mà rỗng thì là do bộ lọc, không phải do kho chưa nạp
+    if (topic) {
+      return (
+        <EmptyState
+          title="Không có từ nào trong chủ đề này"
+          body="Thử bỏ bộ lọc chủ đề để xem toàn bộ danh sách."
+        />
+      );
+    }
+    return <NotSeededYet level={level} what="từ vựng" />;
   }
 
   return (
@@ -525,8 +624,10 @@ function VocabularyPanel({
 // Ngữ pháp
 // ---------------------------------------------------------------------------
 
-function GrammarPanel() {
-  const { data, error, isLoading, reload } = useApi<GrammarList>('/public/grammar?level=N5');
+function GrammarPanel({ level }: { level: JlptLevel }) {
+  const { data, error, isLoading, reload } = useApi<GrammarList>(
+    `/public/grammar?level=${level}`,
+  );
 
   const byCategory = useMemo(() => {
     if (!data) return [];
@@ -543,11 +644,7 @@ function GrammarPanel() {
   if (error) return <ErrorState message={error} onRetry={reload} />;
   if (!data || data.items.length === 0) {
     return (
-      <EmptyState
-        title="Chưa có mẫu ngữ pháp"
-        body="Kho ngữ pháp đang được biên soạn."
-        icon={<BookOpen className="h-10 w-10" />}
-      />
+      <NotSeededYet level={level} what="ngữ pháp" />
     );
   }
 
